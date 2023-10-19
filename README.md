@@ -265,6 +265,39 @@ Turbo-API is designed to be extensible. You can add new services to the factory 
 
 More on this to come...
 
+## Future Features
+
+Intended future updates:
+
+- Built-in AWS back-end services (partially complete)
+  - Get AWS credentials from .env (same as firestore) **
+  - Apply AWS credentials
+  - Test endpoints
+- Validation extension
+  - Make validator into a class
+  - Inject validator, with default
+  - Define validator in turbo-config.json
+- Simplify controller setup even further?
+  - Importable default property rules **
+    - stringProp
+    - numberProp
+    - decimalProp
+    - dateProp
+    - fkProp
+    - etc.
+  - Simplify how routes are added?
+- More configuration options
+  - Add "noMetadata" to eliminate the default "created", "createdBy", "modified", and "modifiedBy" properties from data objects **
+  - Firebase-specific configuration options
+  - AWS-specific configuration options
+
+** = "quick wins"
+
+**CONTRIBUTIONS WELCOME!!**
+If you would like to add any of these updates, please feel free to make a pull request:
+
+https://github.com/AndroidDoctorr/turbo-api
+
 ## License
 
 Turbo-API is licensed under the ISC License.
