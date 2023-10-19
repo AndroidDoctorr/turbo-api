@@ -1,6 +1,6 @@
 {
   "name": "turbo-api",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "An API tool that extends expressJS to add validation and built-in controller CRUD, along with built-in firebase and AWS data, logging, and authentication services.",
   "main": "src/index.js",
   "scripts": {
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AndroidDoctorr/hyper-api.git"
+    "url": "git+https://github.com/AndroidDoctorr/turbo-api.git"
   },
   "keywords": [
     "express",
@@ -21,7 +21,7 @@
   "author": "Andrew Torr",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/AndroidDoctorr/hyper-api/issues"
+    "url": "https://github.com/AndroidDoctorr/trubo-api/issues"
   },
-  "homepage": "https://github.com/AndroidDoctorr/hyper-api#readme"
+  "homepage": "https://github.com/AndroidDoctorr/trubo-api#readme"
 }
