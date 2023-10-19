@@ -24,6 +24,7 @@ First, install Turbo-API in your Node.js project:
 
 Turbo-API follows a controller-based architecture. Here's how you can create a basic controller for a book API:
 
+```javascript
     const ControllerBase = require('hyperAPI/controllerBase');
     const { AuthError, NoContentError, stringType, numberType, validateData } = require('hyperAPI/validation');
     const { handleRoute } = require('hyperAPI/http');
@@ -147,15 +148,87 @@ Turbo-API follows a controller-based architecture. Here's how you can create a b
         BOOK_PROPS,
         bookValidationRules,
     };
+```
 
 ### Defining Your Config
 
-Create a turbo-config.json
+Create a turbo-config.json file in the root folder of your project. It specifies the data and logging services to use, as well as the mapping of controller names to their respective routes.
+
+1. **Create the Configuration File**:
+
+    If you don't have a `turbo-config.json` file in your project, create one in the root folder of your Turbo-API project. You can use the provided example as a starting point:
+
+```javascript
+    {
+        "dataService": "firestore",
+        "loggingService": "firestore",
+        "controllers": {
+            "bookController": "/books",
+            "authorController": "/authors",
+        }
+    }
+```
+
+2. **Configure Data and Logging Services**:
+
+"dataService": Specify the data service to use (e.g., "firestore"). Turbo-API is designed to support any number of back-end services. Firestore is the only back-end service set up by default, as of v1.0.1.
+
+"loggingService": Define the logging service to use (e.g., "firestore"). Similar to the data service, Turbo-API allows for flexibility in selecting logging services.
+
+3. **Map Controllers to Routes**:
+
+In the "controllers" section, you map each controller name to its respective route. For example, "profileController": "/profile" associates the "profileController" with the "/profile" route. You can customize these routes to match your application's needs.
+
+## Setting up Firebase in Your Consuming App
+
+To use Firebase as your data service in your consuming app, you need to set up your Firebase credentials. The Turbo-API library allows you to configure Firebase credentials using environment variables. Follow these steps to set up Firebase in your consuming app:
+
+1.  **Install the Firebase SDK**: If you haven't already, install the Firebase SDK in your project using npm or yarn.
+
+        npm install firebase
+        # OR
+        yarn add firebase
+
+2.  **Create a Firebase Project**:
+
+If you don't have a Firebase project yet, create one on the Firebase Console.
+Once your project is created, navigate to Project Settings to find your Firebase configuration.
+
+3. **Set Up Environment Variables**:
+
+In your consuming app, set up environment variables to store your Firebase configuration. You can use a library like dotenv to load these variables from a .env file.
+
+Create a .env file in your project's root directory (if you don't have one already) and add the following environment variables, replacing the values with your Firebase configuration details:
+
+    FIREBASE_TYPE=your-firebase-app-type
+    FIREBASE_PROJECT_ID=your-project-id
+    FIREBASE_PRIVATE_KEY_ID=your-private-key-id
+    FIREBASE_PRIVATE_KEY=your-private-key
+    FIREBASE_CLIENT_EMAIL=your-client-email
+    FIREBASE_CLIENT_ID=your-client-id
+
+These environment variables are not required, and have default values:
+
+    FIREBASE_AUTH_URI=
+    FIREBASE_TOKEN_URI=
+    FIREBASE_AUTH_PROVIDER_CERT_URL=
+    FIREBASE_CLIENT_CERT_URL=
+
+You can find these configuration values in your Firebase project settings.
+
+4. **Load Environment Variables**:
+
+In your consuming app's entry point (e.g., index.js or app.js), make sure to load the environment variables from the .env file using dotenv. You can do this by adding the following code at the beginning of your entry point:
+
+```javascript
+    require('dotenv').config();
+```
 
 ### Running Your API
 
 To start your Turbo-API, include the following in your main application file:
 
+```javascript
     const { buildApp } = require('./hyperAPI')
 
     // Set up Firebase Admin/Auth (if using Firebase)
@@ -165,6 +238,7 @@ To start your Turbo-API, include the following in your main application file:
 
     // Export the API
     exports.api = functions.https.onRequest(app)
+```
 
 Now your Turbo-API is up and running! You can access the `/get/:id` route for books you've defined in your controller.
 
@@ -176,12 +250,14 @@ Turbo-API is highly customizable. You can extend and modify controllers, create 
 
 Turbo-API provides a consistent way to handle errors, making it easy to return meaningful HTTP responses based on the type of error.
 
+```javascript
     const { ValidationError } = require('turbo-api');
 
     // Inside your controller
     if (error instanceof ValidationError) {
         return res.status(400).json({ error: error.message || 'Bad request' });
     }
+```
 
 ## Extending Turbo-API
 

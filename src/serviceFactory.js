@@ -10,7 +10,7 @@ const registerService = (serviceName, DataService, LoggingService, authMiddlewar
 }
 
 const getDataService = () => {
-    const config = loadConfig()
+    const config = getConfig()
     // Default to Firestore if not specified
     const serviceName = config.dataService || 'firestore'
 
