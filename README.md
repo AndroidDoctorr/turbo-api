@@ -246,9 +246,71 @@ Now your Turbo-API is up and running! You can access the `/get/:id` route for bo
 
 Turbo-API is highly customizable. You can extend and modify controllers, create your custom services, and change validation rules to match your application's unique requirements.
 
+## Understanding Validation Rules
+
+Turbo-API includes a robust validation system that ensures data consistency and integrity. The validation rules are defined in your controllers and help you specify the requirements and constraints for your data. This section provides an overview of how the existing validation rules work and how to customize them.
+
+### Basic Types
+
+Before diving into specific validation rules, let's understand the basic types used in Turbo-API:
+
+- `stringType`: Represents a string.
+- `numberType`: Represents a number.
+- `boolType`: Represents a boolean.
+- `arrType`: Represents an array.
+
+These types are fundamental in validating the data properties. For example, you can specify that a particular property should be of type `string` or `number`.
+
+### Custom Error Types
+
+Turbo-API employs custom error types to handle different error scenarios. Here are the primary error types:
+
+- `NoContentError`: Thrown when a request is unnecessary.
+- `ValidationError`: Thrown when a request is not properly formatted.
+- `AuthError`: Thrown when a user does not have permission to complete the request.
+- `ForbiddenError`: Thrown when a request is valid but presents a conflict.
+- `NotFoundError`: Thrown when a necessary resource cannot be retrieved.
+- `LogicError`: Thrown when a request is valid, but the data is logically invalid or defies the schema's philosophy.
+- `DependencyError`: Thrown when a secondary call fails.
+- `InternalError`: Thrown when an unknown error has occurred.
+- `ServiceError`: Thrown when a third-party service is not available (e.g., ML).
+
+These custom error types allow you to handle different error scenarios with precision.
+
+### Validation Functions
+
+Turbo-API provides several validation functions to check various aspects of data properties:
+
+- `validateData`: Validates a data object against its rules set and potentially against the database.
+- `validateProp`: Validates an individual property against its rules.
+- `validateType`: Validates the property type if specified.
+- `validateLength`: Validates the length of string or array-like properties.
+- `validateSize`: Validates the value of numerical properties.
+- `validateValue`: Validates the property against a set of allowed values, like an enum.
+- `validateCondition`: Validates whether a requirement condition is met.
+- `validateForeignKey`: Validates a foreign key reference (referenced object must exist).
+- `validateUniqueness`: Validates the uniqueness of a property value within the collection.
+- `validateUniquePropCombo`: Validates the combination of specified properties as unique.
+
+These functions help you define how data should be validated, considering types, lengths, sizes, and more.
+
+### Helper Functions
+
+In addition to the validation functions, Turbo-API includes some helper functions:
+
+- `filterObjectByProps`: Sanitizes incoming data against allowed properties.
+- `applyDefaults`: Applies default values to properties according to the rules.
+- `doComparison`: Compares values based on comparison operators.
+
+These helper functions assist in fine-tuning data validation and ensuring your data adheres to the defined rules.
+
 ### Error Handling
 
-Turbo-API provides a consistent way to handle errors, making it easy to return meaningful HTTP responses based on the type of error.
+Turbo-API's validation system uses a range of custom error types to distinguish between different error scenarios. It makes it easy to return appropriate HTTP responses based on the error type. For example, a `ValidationError` results in an HTTP 400 Bad Request response, while an `AuthError` leads to a 401 Not Authorized response.
+
+Understanding these error types and the associated error handling mechanism will help you effectively troubleshoot issues in your Turbo-API application.
+
+You can also extend and customize the validation rules and functions to meet the specific requirements of your application.
 
 ```javascript
     const { ValidationError } = require('turbo-api');
