@@ -263,6 +263,7 @@ Turbo-API provides several validation functions to check various aspects of data
 - `validateLength`: Validates the length of string or array-like properties.
 - `validateSize`: Validates the value of numerical properties.
 - `validateValue`: Validates the property against a set of allowed values, like an enum.
+- `validateFormat`: Validates a string property against a regex pattern
 - `validateCondition`: Validates whether a requirement condition is met.
 - `validateForeignKey`: Validates a foreign key reference (referenced object must exist).
 - `validateUniqueness`: Validates the uniqueness of a property value within the collection.
