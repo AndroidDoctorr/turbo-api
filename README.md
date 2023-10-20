@@ -290,12 +290,7 @@ Understanding these error types and the associated error handling mechanism will
 You can also extend and customize the validation rules and functions to meet the specific requirements of your application.
 
 ```javascript
-    const { ValidationError } = require('turbo-api');
-
-    // Inside your controller
-    if (error instanceof ValidationError) {
-        return res.status(400).json({ error: error.message || 'Bad request' });
-    }
+    (Example to come...)
 ```
 
 ## Extending Turbo-API
