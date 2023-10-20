@@ -25,9 +25,9 @@ First, install Turbo-API in your Node.js project:
 Turbo-API follows a controller-based architecture. Here's how you can create a basic controller for a book API:
 
 ```javascript
-    const ControllerBase = require('hyperAPI/controllerBase');
-    const { AuthError, NoContentError, stringType, numberType, validateData } = require('hyperAPI/validation');
-    const { handleRoute } = require('hyperAPI/http');
+    const ControllerBase = require('turbo-api/controllerBase');
+    const { AuthError, NoContentError, stringType, numberType, validateData } = require('turbo-api/validation');
+    const { handleRoute } = require('turbo-api/http');
 
     const BOOK_COLLECTION = 'Books';
     const AUTHOR_COLLECTION = 'Authors';
@@ -114,30 +114,6 @@ Turbo-API follows a controller-based architecture. Here's how you can create a b
                 this.logger.info(`Topic ${topicId} linked to Spar ${sparId} by ${user.uid}`)
                 return linkResult
             ));
-        }
-
-        async linkToAuthor(bookId, authorId, user) {
-            if (!user) throw new AuthError('User is not authenticated');
-
-            // Check if the book and author exist
-            const book = await this.db.getDocumentById(BOOK_COLLECTION, bookId);
-            if (!book) throw new NotFoundError(`Book with ID ${bookId} not found`);
-
-            const author = await this.db.getDocumentById(AUTHOR_COLLECTION, authorId);
-            if (!author) throw new NotFoundError(`Author with ID ${authorId} not found`);
-
-            // Update the book's author property
-            book.author = authorId;
-
-            // Validate the updated book data
-            validateData(book, bookValidationRules, this.db, BOOK_COLLECTION);
-
-            // Update the book in the database
-            const updatedBook = await this.db.updateDocument(BOOK_COLLECTION, bookId, book, user.uid);
-
-            this.logger.info(`Book ${bookId} linked to Author ${authorId} by ${user.uid}`);
-
-            return updatedBook;
         }
     }
 
@@ -229,7 +205,7 @@ In your consuming app's entry point (e.g., index.js or app.js), make sure to loa
 To start your Turbo-API, include the following in your main application file:
 
 ```javascript
-    const { buildApp } = require('./hyperAPI')
+    const { buildApp } = require('./turbo-api')
 
     // Set up Firebase Admin/Auth (if using Firebase)
     admin.initializeApp()
