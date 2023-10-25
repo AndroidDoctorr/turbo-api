@@ -3,7 +3,7 @@ const { ObjectToString, getDiffString } = require('./string')
 const { getDataService, getLoggingService } = require('./serviceFactory')
 const express = require('express')
 
-module.exports = class ControllerBase {
+class ControllerBase {
     constructor(collectionName, validationRules, propNames) {
         this.collectionName = collectionName
         this.validationRules = validationRules
@@ -130,3 +130,5 @@ module.exports = class ControllerBase {
         return { id: documentId }
     }
 }
+
+module.exports = ControllerBase

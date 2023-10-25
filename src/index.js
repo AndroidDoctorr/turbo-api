@@ -37,7 +37,7 @@ module.exports.buildApp = async () => {
     return app
 }
 // Controller base class
-module.exports.controllerBase = require('./controllerBase')
+module.exports.ControllerBase = require('./controllerBase')
 // Validation module - error types and validation methods
 module.exports.validation = require('./validation')
 // String helpers
