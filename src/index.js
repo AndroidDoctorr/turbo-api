@@ -1,13 +1,13 @@
 const express = require('express')
 const path = require('path')
 
-module.exports.buildApp = () => {
+module.exports.buildApp = async () => {
     // Set up the Express app
     const app = express()
 
     // Load config
     const { getConfig } = require('./file')
-    const config = getConfig()
+    const config = await getConfig()
 
     // Load service middleware
     const { registerService } = require('./serviceFactory')
