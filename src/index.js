@@ -14,7 +14,7 @@ module.exports.buildApp = () => {
     const { createAuthenticationMiddleware } = require('./authServices/firebaseAuthService')
 
     // Load and use controllers dynamically
-    const controllersPath = path.join(__dirname, '..', 'controllers')
+    const controllersPath = path.join(__dirname, 'controllers')
     for (const [controllerName, controllerPath] of Object.entries(config.controllers)) {
         const controllerModule = require(`${controllersPath}/${controllerName}`)
         const ControllerClass = controllerModule.controller
