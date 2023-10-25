@@ -1,13 +1,8 @@
 const express = require('express')
-const cors = require('cors')
 
 module.exports.buildApp = () => {
     // Set up the Express app
     const app = express()
-    app.use(cors({
-        origin: '*',
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    }))
 
     // Load config
     const { getConfig } = require('./file')
