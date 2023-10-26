@@ -7,13 +7,15 @@ const boolType = typeof true
 const arrType = typeof []
 
 const stringRule = (minLength, maxLength, required, unique) =>
-    { type: stringtype, minLength, maxLength, unique, required }
+    { type: stringType, minLength, maxLength, unique, required }
 const boolRule = (required) =>
-    { type: booltype, required }
+    { type: boolType, required }
 const fKeyRule = (reference, required, isNumber) =>
     { type: isNumber ? numberType : stringType, reference, required }
 const enumRule = (values, required, isNumber) =>
     { type: isNumber ? numberType : stringType, values, required }
+const numberRule = (minValue, maxValue, required) =>
+    { type: numberType, minValue, maxValue, required }
 
 // Custom Error Types
 // 2##
@@ -286,4 +288,9 @@ module.exports = {
     numberType,
     boolType,
     arrType,
+    stringRule,
+    fKeyRule,
+    boolRule,
+    enumRule,
+    numberRule,
 }
