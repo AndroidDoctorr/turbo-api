@@ -6,6 +6,15 @@ const numberType = typeof 1
 const boolType = typeof true
 const arrType = typeof []
 
+const stringRule = (minLength, maxLength, required, unique) =>
+    { type: stringtype, minLength, maxLength, unique, required }
+const boolRule = (required) =>
+    { type: booltype, required }
+const fKeyRule = (reference, required, isNumber) =>
+    { type: isNumber ? numberType : stringType, reference, required }
+const enumRule = (values, required, isNumber) =>
+    { type: isNumber ? numberType : stringType, values, required }
+
 // Custom Error Types
 // 2##
 // 204-type error

@@ -1,20 +1,14 @@
-const path = require('path')
 const fs = require('fs')
+const util = require('util')
+const path = require('path')
 
-const getConfig = () => {
-    return readFile(path.join(process.cwd(), 'turbo-config.json'))
-}
+const readFileAsync = util.promisify(fs.readFile)
 
-const readFile = (path) => {
-    fs.readFile(path, 'utf8', (err, data) => {
-        if (err)
-            console.error('Error reading file:', err)
-        else
-            return JSON.parse(data)
-    })
+const getConfig = async () => {
+    return await readFileAsync(path.join(process.cwd(), 'turbo-config.json'))
+        .then(data => JSON.parse(data))
 }
 
 module.exports = {
     getConfig,
-    readFile,
 }

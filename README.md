@@ -111,7 +111,7 @@ Turbo-API follows a controller-based architecture. Here's how you can create a b
                 // Validate against the rules defined above
                 validateData(bookAuthor, bookAuthorValidationRules, this.db, BOOKAUTHOR_COLLECTION)
                 const linkResult = await this.db.createDocument(BOOKAUTHOR_COLLECTION, bookAuthor, user.uid)
-                this.logger.info(`Topic ${topicId} linked to Spar ${sparId} by ${user.uid}`)
+                this.logger.info(`Author ${authorId} linked to Book ${bookId} by ${user.uid}`)
                 return linkResult
             ));
         }
