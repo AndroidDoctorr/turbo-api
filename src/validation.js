@@ -136,6 +136,7 @@ const validateProp = async (prop, data, rule, dbService, collectionName) => {
     validateLength(prop, value, rule)
     validateSize(prop, value, rule)
     validateValue(prop, value, rule)
+    validateFormat(prop, value, rule)
     // Rules that require checking against existing data
     await validateForeignKey(prop, value, rule, dbService)
     await validateUniqueness(prop, value, rule, dbService, collectionName)
@@ -204,6 +205,14 @@ const validateCondition = (prop, data, condition) => {
     else targetValue = target
     const baseValue = data[base]
     return doComparison(baseValue, comparison, targetValue)
+}
+// Validate format via regex
+const validateFormat = (prop, value, rule) => {
+    if (!rule.format) return
+    if (typeof value !== stringType)
+        throw new ValidationError(`${prop} format cannot be validated - not a string`)
+    if (!value.match(rule.format))
+        throw new ValidationError(`${prop} value ${value} does not fit the required format`)
 }
 // Comparison helper
 const doComparison = (baseValue, comparison, targetValue) => {

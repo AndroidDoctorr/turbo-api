@@ -111,7 +111,7 @@ Turbo-API follows a controller-based architecture. Here's how you can create a b
                 // Validate against the rules defined above
                 validateData(bookAuthor, bookAuthorValidationRules, this.db, BOOKAUTHOR_COLLECTION)
                 const linkResult = await this.db.createDocument(BOOKAUTHOR_COLLECTION, bookAuthor, user.uid)
-                this.logger.info(`Topic ${topicId} linked to Spar ${sparId} by ${user.uid}`)
+                this.logger.info(`Author ${authorId} linked to Book ${bookId} by ${user.uid}`)
                 return linkResult
             ));
         }
@@ -263,6 +263,7 @@ Turbo-API provides several validation functions to check various aspects of data
 - `validateLength`: Validates the length of string or array-like properties.
 - `validateSize`: Validates the value of numerical properties.
 - `validateValue`: Validates the property against a set of allowed values, like an enum.
+- `validateFormat`: Validates a string property against a regex pattern
 - `validateCondition`: Validates whether a requirement condition is met.
 - `validateForeignKey`: Validates a foreign key reference (referenced object must exist).
 - `validateUniqueness`: Validates the uniqueness of a property value within the collection.
@@ -289,12 +290,7 @@ Understanding these error types and the associated error handling mechanism will
 You can also extend and customize the validation rules and functions to meet the specific requirements of your application.
 
 ```javascript
-    const { ValidationError } = require('turbo-api');
-
-    // Inside your controller
-    if (error instanceof ValidationError) {
-        return res.status(400).json({ error: error.message || 'Bad request' });
-    }
+    (Example to come...)
 ```
 
 ## Extending Turbo-API

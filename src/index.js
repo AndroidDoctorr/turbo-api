@@ -1,25 +1,22 @@
 const express = require('express')
-const cors = require('cors')
+const path = require('path')
 
-module.exports.buildApp = () => {
+module.exports.buildApp = async () => {
     // Set up the Express app
     const app = express()
-    app.use(cors({
-        origin: '*',
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    }))
 
     // Load config
     const { getConfig } = require('./file')
-    const config = getConfig()
+    const config = await getConfig()
 
     // Load service middleware
     const { registerService } = require('./serviceFactory')
     const { createAuthenticationMiddleware } = require('./authServices/firebaseAuthService')
 
     // Load and use controllers dynamically
+    const controllersPath = path.join(process.cwd(), 'controllers')
     for (const [controllerName, controllerPath] of Object.entries(config.controllers)) {
-        const controllerModule = require(`../controllers/${controllerName}`)
+        const controllerModule = require(path.join(controllersPath, `${controllerName}`))
         const ControllerClass = controllerModule.controller
         const controller = new ControllerClass()
         app.use(controllerPath, controller.getRouter())
@@ -40,7 +37,7 @@ module.exports.buildApp = () => {
     return app
 }
 // Controller base class
-module.exports.controllerBase = require('./controllerBase')
+module.exports.ControllerBase = require('./controllerBase')
 // Validation module - error types and validation methods
 module.exports.validation = require('./validation')
 // String helpers
