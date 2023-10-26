@@ -2,6 +2,17 @@
 
 Turbo-API is a high-speed, feature-rich Node.js library that makes it a breeze to create custom APIs, perfect for both beginners and experienced developers. With Turbo-API, you can rapidly set up robust APIs with built-in validation, logging, and services for multiple data backends.
 
+THIS LIBRARY IS IN-PROGRESS
+
+It's almost working, but it still has a few kinks to iron out. If you would like to help me get it working, feel free to clone it and take a look, or email me (see below).
+
+To test:
+- Set up a Google firebase app
+- Install firebase tools via npm `npm install -g firebase-tools`
+- Create a firebase functions app using the firebase-tools CLI, connected to your application (create a folder and run `firebase init` from that folder in the terminal)
+- Install turbo-api in the functions application `cd functions`, `npm i turbo-api`
+- Create your turbo-config.json in the main project folder (alongside /functions, not in it)
+
 ## Features
 
 -   **Rapid API Development**: Turbo-API is designed to help you quickly set up APIs with minimal configuration, allowing you to focus on your application's core logic.
@@ -16,7 +27,7 @@ Turbo-API is a high-speed, feature-rich Node.js library that makes it a breeze t
 
 ### Installation
 
-First, install Turbo-API in your Node.js project:
+First, install Turbo-API in your Node.js project (currently, this only works for firebase functions, but I plan to add other services):
 
 `npm install turbo-api`
 
@@ -25,52 +36,42 @@ First, install Turbo-API in your Node.js project:
 Turbo-API follows a controller-based architecture. Here's how you can create a basic controller for a book API:
 
 ```javascript
-    const ControllerBase = require('turbo-api/controllerBase');
-    const { AuthError, NoContentError, stringType, numberType, validateData } = require('turbo-api/validation');
-    const { handleRoute } = require('turbo-api/http');
+    // Import the necessary content from Turbo-API
+    const ControllerBase = require('turbo-api').ControllerBase;
+    const { validation } = require('turbo-api');
+    const { httpHelpers } = require('turbo-api');
+    const { serviceFactory } = require('turbo-api');
+    const { getDataService } = serviceFactory;
+    const { handleRoute } = httpHelpers;
+    const { AuthError, NoContentError, stringType, numberType, validateData, stringRule, numberRule, enumRule } = validation;
+    // Import data from other controllers, if necessary
+    const { AUTHOR_COLLECTION } = require('./authorController');
 
+    // Define your collections and their properties
     const BOOK_COLLECTION = 'Books';
-    const AUTHOR_COLLECTION = 'Authors';
+    const BOOKAUTHOR_COLLECTION = 'BookAuthors';
     const BOOK_PROPS = ['title', 'year', 'genre', 'isbn', 'author'];
     const BOOKAUTHOR_PROPS = ['book', 'author']
 
+    // Create validation rules for your properties
     const bookValidationRules = {
-        title: {
-            required: true,
-            type: stringType,
-            minLength: 2,
-            maxLength: 100,
-        },
-        year: {
-            required: true,
-            type: numberType,
-            minValue: 0,
-            maxValue: new Date().getFullYear(),
-        },
-        genre: {
-            required: false,
-            type: stringType,
-            values: ['history', 'horror', 'mystery', 'reference', 'self-help', ...],
-        },
-        isbn: {
-            required: false,
-            unique: true,
-            type: stringType,
-            minLength: 10,
-            maxLength: 20,
-        },
-        author: {
-            required: true,
-            type: stringType,
-            minLength: 2,
-            maxLength: 100,
-            reference: AUTHOR_COLLECTION, // Reference to the "Authors" collection
-        },
+        // Required string property
+        title: stringRule(2, 100, true),
+        // Required number property
+        year: numberRule(0, new Date().getFullYear(), true),
+        // Enumerable property
+        genre: enumRule(['history', 'horror', 'mystery', 'reference', 'self-help']),
+        // Optional, unique string property
+        isbn: stringRule(10, 20, false, true),
+        // Foreign key reference to the "Authors" collection
+        author: fKeyRule(AUTHOR_COLLECTION, true),
     };
+    // Define any necessary joining table entities
     const bookAuthorValidationRules = {
+        // You can specify a set of properties as needing to have a unique combination (here, that means you can't link the same author to the same book twice)
         uniquePropCombination: ['bookId', 'authorId'],
-        bookId: { required: true, type: stringType, reference: BOOK_COLLECTION },
-        authorId: { required: true, type: stringType, reference: AUTHOR_COLLECTION },
+        bookId: fKeyRule(BOOK_COLLECTION, true),
+        authorId: fKeyRule(AUTHOR_COLLECTION, true),
     }
 
     class BookController extends ControllerBase {
@@ -99,28 +100,33 @@ Turbo-API follows a controller-based architecture. Here's how you can create a b
                 await this.deleteDocument(req.params.id, req.user)
             ));
 
+            // Add custom endpoints/actions like so:
             this.router.put('/:bookId/author/:authorId', (req, res) => handleRoute(req, res, async (req) =>
-                const user = req.user
-                if (!user) throw new AuthError('User is not authenticated')
+                const user = req.user;
+                if (!user) throw new AuthError('User is not authenticated');
 
                 // Create an entry in a book-author joining table
-                const bookId = req.params.bookId
-                const authorId = req.params.authorId
-                const bookAuthor = { bookId, authorId }
+                const bookId = req.params.bookId;
+                const authorId = req.params.authorId;
+                const bookAuthor = { bookId, authorId };
 
                 // Validate against the rules defined above
-                validateData(bookAuthor, bookAuthorValidationRules, this.db, BOOKAUTHOR_COLLECTION)
-                const linkResult = await this.db.createDocument(BOOKAUTHOR_COLLECTION, bookAuthor, user.uid)
-                this.logger.info(`Author ${authorId} linked to Book ${bookId} by ${user.uid}`)
-                return linkResult
+                validateData(bookAuthor, bookAuthorValidationRules, this.db, BOOKAUTHOR_COLLECTION);
+                // Perform the data action using the data service
+                const db = await getDataService();
+                const linkResult = await db.createDocument(BOOKAUTHOR_COLLECTION, bookAuthor, user.uid);
+                // Log the event, if necessary
+                this.logger.info(`Author ${authorId} linked to Book ${bookId} by ${user.uid}`);
+                // Return the result (this will be the response data)
+                return linkResult;
             ));
         }
     }
 
+    // Export the controller, along with other data that might be used by other controllers
     module.exports = {
         controller: BookController,
         BOOK_COLLECTION,
-        AUTHOR_COLLECTION,
         BOOK_PROPS,
         bookValidationRules,
     };
@@ -303,25 +309,15 @@ More on this to come...
 
 Intended future updates:
 
-- Built-in AWS back-end services (partially complete)
-  - Get AWS credentials from .env (same as firestore) **
-  - Apply AWS credentials
-  - Test endpoints
 - Validation extension
   - Make validator into a class
   - Inject validator, with default
-  - Define validator in turbo-config.json
+  - Define validator in turbo-config.json?
 - Simplify controller setup even further?
-  - Importable default property rules **
-    - stringProp
-    - numberProp
-    - decimalProp
-    - dateProp
-    - fkProp
-    - etc.
-  - Simplify how routes are added?
+  - Add BasicCRUD and FullCRUD methods to add default endpoints
 - More configuration options
   - Add "noMetadata" to eliminate the default "created", "createdBy", "modified", and "modifiedBy" properties from data objects **
+  - Add "publicGet" flag to controller definitions?
   - Firebase-specific configuration options
   - AWS-specific configuration options
 
