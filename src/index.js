@@ -28,7 +28,7 @@ module.exports.buildApp = async () => {
     registerService('firestore', FirebaseService, FirestoreLoggerService, createAuthenticationMiddleware)
 
     // Load the service from the config
-    const authServiceName = config.authService || 'firestore'
+    const authServiceName = config.authService || 'firebase'
     const authMiddleware = require(`./authServices/${authServiceName}AuthService.js`)
 
     // Add service-specific middleware for authorization
