@@ -89,13 +89,13 @@ class ControllerBase {
         return documents
     }
     // GET USER
-    getUserDocuments = async (user, userId) => {
+    getUserDocuments = async (user, ownerId) => {
         const db = await getDataService()
         // ADMIN ONLY
         if (!user || !user.admin)
             throw new AuthError('User is not authenticated')
         const userId = !!user ? user.uid : 'anonymous'
-        const documents = await db.getUserDocuments(this.collectionName, userId)
+        const documents = await db.getUserDocuments(this.collectionName, ownerId)
         this.logger.info(`${this.collectionName} owned by user ${userId} retrieved by user ${userId}`)
         return documents
     }
