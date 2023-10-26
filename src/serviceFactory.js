@@ -9,8 +9,8 @@ const registerService = (serviceName, DataService, LoggingService, authMiddlewar
     serviceRegistry[serviceName] = { dataService, loggingService, authMiddleware }
 }
 
-const getDataService = () => {
-    const config = getConfig()
+const getDataService = async () => {
+    const config = await getConfig()
     // Default to Firestore if not specified
     const serviceName = config.dataService || 'firestore'
 
@@ -19,8 +19,8 @@ const getDataService = () => {
     }
 }
 
-const getLoggingService = () => {
-    const config = getConfig()
+const getLoggingService = async () => {
+    const config = await getConfig()
     // Default to Firestore if not specified
     const serviceName = config.loggingService || 'firestore'
 
