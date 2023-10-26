@@ -19,6 +19,7 @@ class ControllerBase {
     createDocument = async (data, user) => {
         const db = await getDataService()
         if (!user) throw new AuthError('User is not authenticated')
+        const userId = !!user ? user.uid : 'anonymous'
         const filteredData = filterObjectByProps(data, this.propNames)
         const defaultedData = applyDefaults(filteredData, this.validationRules)
         validateData(defaultedData, this.validationRules, db, this.collectionName)
