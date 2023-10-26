@@ -22,17 +22,18 @@ class ControllerBase {
         const filteredData = filterObjectByProps(data, this.propNames)
         const defaultedData = applyDefaults(filteredData, this.validationRules)
         validateData(defaultedData, this.validationRules, db, this.collectionName)
-        const newData = await db.createDocument(this.collectionName, defaultedData, user.uid)
+        const newData = await db.createDocument(this.collectionName, defaultedData, userId)
         this.logger.info(`New item added to ${this.collectionName} with ID ${newData.id}:\n` +
-            `${ObjectToString(newData)} by ${user.uid}`)
+            `${ObjectToString(newData)} by ${userId}`)
         return newData
     }
     // GET BY ID
     getDocumentById = async (documentId, user, isPublic) => {
         const db = await getDataService()
         if (!user && !isPublic) throw new AuthError('You must be logged in to see this')
+        const userId = !!user ? user.uid : 'anonymous'
         const data = await db.getDocumentById(this.collectionName, documentId)
-        this.logger.info(`${this.collectionName}: ${documentId} retrieved by ${user.uid}`)
+        this.logger.info(`${this.collectionName}: ${documentId} retrieved by ${userId}`)
         return data
     }
     // GET ACTIVE
@@ -40,8 +41,9 @@ class ControllerBase {
         const db = await getDataService()
         if (!user && !isPublic)
             throw new AuthError('You must be logged in to see this')
+        const userId = !!user ? user.uid : 'anonymous'
         const documents = await db.getActiveDocuments(this.collectionName)
-        this.logger.info(`Active ${this.collectionName} retrieved by ${user.uid}`)
+        this.logger.info(`Active ${this.collectionName} retrieved by ${userId}`)
         return documents
     }
     // GET ALL
@@ -50,8 +52,9 @@ class ControllerBase {
         // ADMIN ONLY
         if (!user || !user.admin)
             throw new AuthError('User is not authenticated')
+        const userId = !!user ? user.uid : 'anonymous'
         const documents = await db.getAllDocuments(this.collectionName)
-        this.logger.info(`All ${this.collectionName} retrieved by user ${user.uid}`)
+        this.logger.info(`All ${this.collectionName} retrieved by user ${userId}`)
         return documents
     }
     // GET BY PROP
@@ -59,8 +62,9 @@ class ControllerBase {
         const db = await getDataService()
         if (!user && !isPublic)
             throw new AuthError('You must be logged in to see this')
+        const userId = !!user ? user.uid : 'anonymous'
         const documents = await db.getDocumentsByProp(this.collectionName, prop, value)
-        this.logger.info(`${this.collectionName} where ${prop} = ${value} retrieved by ${user.uid}`)
+        this.logger.info(`${this.collectionName} where ${prop} = ${value} retrieved by ${userId}`)
         return documents
     }
     // GET BY PROPS
@@ -68,8 +72,9 @@ class ControllerBase {
         const db = await getDataService()
         if (!user && !isPublic)
             throw new AuthError('You must be logged in to see this')
+        const userId = !!user ? user.uid : 'anonymous'
         const documents = await db.getDocumentsByProps(this.collectionName, props)
-        this.logger.info(`${this.collectionName} where ${ObjectToString(props)}\n retrieved by ${user.uid}`)
+        this.logger.info(`${this.collectionName} where ${ObjectToString(props)}\n retrieved by ${userId}`)
         return documents
     }
     // GET MY
@@ -77,8 +82,9 @@ class ControllerBase {
         const db = await getDataService()
         if (!user)
             throw new AuthError('User is not authenticated')
-        const documents = await db.getMyDocuments(this.collectionName, user.uid)
-        this.logger.info(`Own ${this.collectionName} retrieved by user ${user.uid}`)
+        const userId = !!user ? user.uid : 'anonymous'
+        const documents = await db.getMyDocuments(this.collectionName, userId)
+        this.logger.info(`Own ${this.collectionName} retrieved by user ${userId}`)
         return documents
     }
     // GET USER
@@ -87,8 +93,9 @@ class ControllerBase {
         // ADMIN ONLY
         if (!user || !user.admin)
             throw new AuthError('User is not authenticated')
+        const userId = !!user ? user.uid : 'anonymous'
         const documents = await db.getUserDocuments(this.collectionName, userId)
-        this.logger.info(`${this.collectionName} owned by user ${userId} retrieved by user ${user.uid}`)
+        this.logger.info(`${this.collectionName} owned by user ${userId} retrieved by user ${userId}`)
         return documents
     }
 
@@ -105,10 +112,11 @@ class ControllerBase {
         // User must be creator or admin
         if (!user && !(user.admin || user.uid === oldData.createdBy))
             throw new AuthError('User is not authenticated')
+        const userId = !!user ? user.uid : 'anonymous'
         const filteredData = filterObjectByProps(data, this.propNames)
         validateData(filteredData, this.validationRules, db, this.collectionName)
-        const newData = await db.updateDocument(this.collectionName, documentId, filteredData, user.uid)
-        this.logger.info(`${this.collectionName}: ${documentId} updated by user ${user.uid}:` +
+        const newData = await db.updateDocument(this.collectionName, documentId, filteredData, userId)
+        this.logger.info(`${this.collectionName}: ${documentId} updated by user ${userId}:` +
             `${getDiffString(oldData, newData)}`)
         return { id: documentId, ...newData }
     }
@@ -118,8 +126,9 @@ class ControllerBase {
         // User must be creator or admin
         if (!user || !(user.admin || user.uid === data.createdBy))
             throw new AuthError('User is not authenticated')
-        await db.archiveDocument(this.collectionName, documentId, user.uid)
-        this.logger.info(`${this.collectionName}: ${documentId} archived by user ${user.uid}`)
+        const userId = !!user ? user.uid : 'anonymous'
+        await db.archiveDocument(this.collectionName, documentId, userId)
+        this.logger.info(`${this.collectionName}: ${documentId} archived by user ${userId}`)
         return { id: documentId }
     }
     // DE-ARCHIVE
@@ -127,8 +136,9 @@ class ControllerBase {
         const db = await getDataService()
         // ADMIN ONLY
         if (!user || !user.admin) throw new AuthError('User is not authenticated')
+        const userId = !!user ? user.uid : 'anonymous'
         await db.dearchiveDocument(this.collectionName, documentId)
-        this.logger.warn(`${this.collectionName}: ${documentId} - DE-ARCHIVED by user ${user.uid}`)
+        this.logger.warn(`${this.collectionName}: ${documentId} - DE-ARCHIVED by user ${userId}`)
         return { id: documentId }
     }
     // DELETE
@@ -136,8 +146,9 @@ class ControllerBase {
         const db = await getDataService()
         // ADMIN ONLY
         if (!user || !user.admin) throw new AuthError('User is not authenticated')
+        const userId = !!user ? user.uid : 'anonymous'
         await db.deleteDocument(this.collectionName, documentId)
-        this.logger.warn(`${this.collectionName}: ${documentId} - DELETED by user ${user.uid}`)
+        this.logger.warn(`${this.collectionName}: ${documentId} - DELETED by user ${userId}`)
         return { id: documentId }
     }
 }
