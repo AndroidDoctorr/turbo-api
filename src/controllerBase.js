@@ -13,6 +13,49 @@ class ControllerBase {
         this.configureRoutes()
     }
     configureRoutes() { }
+
+    basicCRUD() {
+        this.router.post('/', (req, res) => handleRoute(req, res, async (req) =>
+            await this.createDocument(req.body, req.user)
+        ))
+
+        this.router.get('/:id', (req, res) => handleRoute(req, res, async (req) =>
+            await this.getDocumentById(req.params.id, req.user)
+        ))
+
+        this.router.get('/', (req, res) => handleRoute(req, res, async (req) =>
+            await this.getActiveDocuments(req.user, true)
+        ))
+
+        this.router.put('/:id', (req, res) => handleRoute(req, res, async (req) =>
+            await this.updateDocument(req.params.id, req.body, req.user)
+        ))
+
+        this.router.delete('/:id', (req, res) => handleRoute(req, res, async (req) =>
+            await this.deleteDocument(req.params.id, req.user)
+        ))
+    }
+
+    fullCRUD() {
+        this.basicCRUD()
+
+        this.router.get('/my', (req, res) => handleRoute(req, res, async (req) =>
+            await this.getMyDocuments(req.user)
+        ))
+
+        this.router.get('/includeInactive', (req, res) => handleRoute(req, res, async (req) =>
+            await this.getAllDocuments(req.user)
+        ))
+
+        this.router.delete('/:id/archive', (req, res) => handleRoute(req, res, async (req) =>
+            await this.archiveDocument(req.params.id, req.user)
+        ))
+
+        this.router.put('/:id/dearchive', (req, res) => handleRoute(req, res, async (req) =>
+            await this.dearchiveDocument(req.params.id, req.user)
+        ))
+    }
+
     getRouter() { return this.router }
     // CREATE
     createDocument = async (data, user) => {
