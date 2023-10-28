@@ -1,6 +1,6 @@
 {
   "name": "turbo-api",
-  "version": "1.0.24",
+  "version": "1.0.29",
   "description": "An API tool that extends expressJS to add validation and built-in controller CRUD, along with built-in firebase and AWS data, logging, and authentication services.",
   "main": "src/index.js",
   "scripts": {
