@@ -14,13 +14,16 @@ class ControllerBase {
     }
     configureRoutes() { }
 
-    basicCRUD() {
+    basicCRUD(options) {
+        // Get options, if any are defined
+        const { isPublicGet, isPublicPost, noMetaData, allowUserDelete } = options || {}
+
         this.router.post('/', (req, res) => handleRoute(req, res, async (req) =>
-            await this.createDocument(req.body, req.user)
+            await this.createDocument(req.body, req.user, isPublicPost, noMetaData)
         ))
 
         this.router.get('/:id', (req, res) => handleRoute(req, res, async (req) =>
-            await this.getDocumentById(req.params.id, req.user)
+            await this.getDocumentById(req.params.id, req.user, isPublicGet)
         ))
 
         this.router.get('/', (req, res) => handleRoute(req, res, async (req) =>
@@ -32,41 +35,46 @@ class ControllerBase {
         ))
 
         this.router.delete('/:id', (req, res) => handleRoute(req, res, async (req) =>
-            await this.deleteDocument(req.params.id, req.user)
+            await this.deleteDocument(req.params.id, req.user, allowUserDelete)
         ))
     }
 
-    fullCRUD() {
-        this.basicCRUD()
+    fullCRUD(options) {
+        // Get options, if any are defined, and pass to basicCRUD
+        const { noMetaData } = options || {}
+        this.basicCRUD(options)
 
-        this.router.get('/my', (req, res) => handleRoute(req, res, async (req) =>
-            await this.getMyDocuments(req.user)
-        ))
+        if (!noMetaData) {
+            this.router.get('/my', (req, res) => handleRoute(req, res, async (req) =>
+                await this.getMyDocuments(req.user)
+            ))
+        }
 
         this.router.get('/includeInactive', (req, res) => handleRoute(req, res, async (req) =>
             await this.getAllDocuments(req.user)
         ))
 
         this.router.delete('/:id/archive', (req, res) => handleRoute(req, res, async (req) =>
-            await this.archiveDocument(req.params.id, req.user)
+            await this.archiveDocument(req.params.id, req.user, noMetaData)
         ))
 
         this.router.put('/:id/dearchive', (req, res) => handleRoute(req, res, async (req) =>
-            await this.dearchiveDocument(req.params.id, req.user)
+            await this.dearchiveDocument(req.params.id, req.user, noMetaData)
         ))
     }
 
     getRouter() { return this.router }
     // CREATE
-    createDocument = async (data, user) => {
+    createDocument = async (data, user, isPublic, noMetaData) => {
         const db = await getDataService()
         const logger = await getLoggingService()
-        if (!user) throw new AuthError('User is not authenticated')
+        if (!user && !(isPublic && noMetaData))
+            throw new AuthError('User is not authenticated')
         const userId = !!user ? user.uid : 'anonymous'
         const filteredData = filterObjectByProps(data, this.propNames)
         const defaultedData = applyDefaults(filteredData, this.validationRules)
         validateData(defaultedData, this.validationRules, db, this.collectionName)
-        const newData = await db.createDocument(this.collectionName, defaultedData, userId)
+        const newData = await db.createDocument(this.collectionName, defaultedData, userId, noMetaData)
         logger.info(`New item added to ${this.collectionName} with ID ${newData.id}:\n` +
             `${objectToString(defaultedData)} by ${userId}`)
         return newData
@@ -77,7 +85,7 @@ class ControllerBase {
         const logger = await getLoggingService()
         if (!user && !isPublic) throw new AuthError('You must be logged in to see this')
         const userId = !!user ? user.uid : 'anonymous'
-        const data = await db.getDocumentById(this.collectionName, documentId)
+        const data = await db.getDocumentById(this.collectionName, documentId, !!user.admin)
         logger.info(`${this.collectionName}: ${documentId} retrieved by ${userId}`)
         return data
     }
@@ -173,36 +181,37 @@ class ControllerBase {
         return { id: documentId, ...newData }
     }
     // ARCHIVE
-    archiveDocument = async (documentId, user) => {
+    archiveDocument = async (documentId, user, noMetaData) => {
         const db = await getDataService()
         const logger = await getLoggingService()
         // User must be creator or admin
         if (!user || !(user.admin || user.uid === data.createdBy))
             throw new AuthError('User is not authenticated')
         const userId = !!user ? user.uid : 'anonymous'
-        await db.archiveDocument(this.collectionName, documentId, userId)
+        await db.archiveDocument(this.collectionName, documentId, userId, noMetaData)
         logger.info(`${this.collectionName}: ${documentId} archived by user ${userId}`)
         return { id: documentId }
     }
     // DE-ARCHIVE
-    dearchiveDocument = async (documentId, user) => {
+    dearchiveDocument = async (documentId, user, noMetaData) => {
         const db = await getDataService()
         const logger = await getLoggingService()
         // ADMIN ONLY
         if (!user || !user.admin) throw new AuthError('User is not authenticated')
         const userId = !!user ? user.uid : 'anonymous'
-        await db.dearchiveDocument(this.collectionName, documentId)
+        await db.dearchiveDocument(this.collectionName, documentId, userId, noMetaData)
         logger.warn(`${this.collectionName}: ${documentId} - DE-ARCHIVED by user ${userId}`)
         return { id: documentId }
     }
     // DELETE
-    deleteDocument = async (documentId, user) => {
+    deleteDocument = async (documentId, user, allowUserDelete) => {
         const db = await getDataService()
         const logger = await getLoggingService()
         // ADMIN ONLY
-        if (!user || !user.admin) throw new AuthError('User is not authenticated')
-        const userId = !!user ? user.uid : 'anonymous'
-        await db.deleteDocument(this.collectionName, documentId)
+        if (!user || (!user.admin && !allowUserDelete))
+            throw new AuthError('User is not authenticated')
+        const userId = user.uid
+        await db.deleteDocument(this.collectionName, documentId, userId, noMetaData)
         logger.warn(`${this.collectionName}: ${documentId} - DELETED by user ${userId}`)
         return { id: documentId }
     }
