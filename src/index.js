@@ -13,11 +13,18 @@ module.exports.buildApp = async () => {
     const { registerService } = require('./serviceFactory')
     const { createAuthenticationMiddleware } = require('./authServices/firebaseAuthService')
 
+    // Register Firebase as the default service
+    const FirebaseService = require('./dataServices/firestoreDataService')
+    const FirestoreLoggerService = require('./loggingServices/firestoreLoggerService')
+    registerService('firestore', FirebaseService, FirestoreLoggerService, createAuthenticationMiddleware)
+
     // Load the auth service from the config
     const authServiceName = config.authService || 'firebase'
     const authMiddleware = require(`./authServices/${authServiceName}AuthService.js`)
+    const dataServiceName = config.dataService || 'firestore'
+    const dataService = require(`./dataServices/${dataServiceName}DataService.js`)
     // Add service-specific middleware for authorization
-    app.use(authMiddleware.createAuthenticationMiddleware)
+    app.use(authMiddleware.createAuthenticationMiddleware(dataService))
 
     // Load and use controllers dynamically
     const controllersPath = path.join(process.cwd(), 'controllers')
@@ -27,11 +34,6 @@ module.exports.buildApp = async () => {
         const controller = new ControllerClass()
         app.use(controllerPath, controller.getRouter())
     }
-
-    // Register Firebase as the default service
-    const FirebaseService = require('./dataServices/firestoreDataService')
-    const FirestoreLoggerService = require('./loggingServices/firestoreLoggerService')
-    registerService('firestore', FirebaseService, FirestoreLoggerService, createAuthenticationMiddleware)
 
     return app
 }
