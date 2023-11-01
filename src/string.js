@@ -1,4 +1,5 @@
 const objectToString = (document, maxStringLength, depth) => {
+    if (document === null || document === undefined) return 'null'
     if (maxStringLength == null) maxStringLength = 64
     if (depth == null) depth = 0
     return (depth > 0 ? '\n' : '') + Object.keys(document)
