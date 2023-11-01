@@ -1,5 +1,5 @@
 const { AuthError, NotFoundError, applyDefaults, validateData, filterObjectByProps } = require('./validation')
-const { ObjectToString, getDiffString } = require('./string')
+const { objectToString, getDiffString } = require('./string')
 const { getDataService, getLoggingService } = require('./serviceFactory')
 const express = require('express')
 
@@ -68,7 +68,7 @@ class ControllerBase {
         validateData(defaultedData, this.validationRules, db, this.collectionName)
         const newData = await db.createDocument(this.collectionName, defaultedData, userId)
         logger.info(`New item added to ${this.collectionName} with ID ${newData.id}:\n` +
-            `${ObjectToString(newData)} by ${userId}`)
+            `${objectToString(defaultedData)} by ${userId}`)
         return newData
     }
     // GET BY ID
@@ -123,7 +123,7 @@ class ControllerBase {
             throw new AuthError('You must be logged in to see this')
         const userId = !!user ? user.uid : 'anonymous'
         const documents = await db.getDocumentsByProps(this.collectionName, props)
-        logger.info(`${this.collectionName} where ${ObjectToString(props)}\n retrieved by ${userId}`)
+        logger.info(`${this.collectionName} where ${objectToString(props)}\n retrieved by ${userId}`)
         return documents
     }
     // GET MY
