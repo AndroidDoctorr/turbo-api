@@ -1,10 +1,14 @@
 # Turbo-API
 
-Turbo-API is a high-speed, feature-rich Node.js library that makes it a breeze to create custom APIs, perfect for both beginners and experienced developers. With Turbo-API, you can rapidly set up robust APIs with built-in validation, logging, and services for multiple data backends.
+Turbo-API is a high-speed, feature-rich Node.js library that makes it a breeze to create custom APIs, perfect for both beginners and experienced developers. With Turbo-API, you can rapidly set up robust APIs with built-in validation, logging, and services for multiple data backends. Think .NET for JS but better.
 
-THIS LIBRARY IS IN-PROGRESS
-
-It's almost working, but it still has a few kinks to iron out. If you would like to help me get it working, feel free to clone it and take a look, or email me (see below).
+v1.1 - IT'S ALIVE!
+Pretend this is 1.0 - this is the first fully functional version/MVP. So far this has:
+- Firestore/firebase support
+- Model validation
+- Customizable endpoints
+- Customizable permissions
+- Logging and authorization
 
 To test:
 - Set up a Google firebase app
@@ -12,6 +16,7 @@ To test:
 - Create a firebase functions app using the firebase-tools CLI, connected to your application (create a folder and run `firebase init` from that folder in the terminal)
 - Install turbo-api in the functions application `cd functions`, `npm i turbo-api`
 - Create your turbo-config.json in the main project folder (alongside /functions, not in it)
+- Set up your controllers, in /functions/controllers, following the example below
 
 ## Features
 
@@ -33,14 +38,12 @@ First, install Turbo-API in your Node.js project (currently, this only works for
 
 ### Creating a Controller
 
-Turbo-API follows a controller-based architecture. Here's how you can create a basic controller for a book API:
+Turbo-API follows a controller-based architecture. Here's how you can create a basic controller for a Book API:
 
 ```javascript
     // Import the necessary content from Turbo-API
     const ControllerBase = require('turbo-api').ControllerBase;
-    const { validation } = require('turbo-api');
-    const { httpHelpers } = require('turbo-api');
-    const { serviceFactory } = require('turbo-api');
+    const { validation, serviceFactory, httpHelpers } = require('turbo-api');
     const { getDataService } = serviceFactory;
     const { handleRoute } = httpHelpers;
     const { AuthError, NoContentError, stringType, numberType, validateData, stringRule, numberRule, enumRule } = validation;
