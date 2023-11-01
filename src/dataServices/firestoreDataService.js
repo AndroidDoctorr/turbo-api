@@ -21,7 +21,7 @@ class FirebaseService {
             newData.modified = currentDate
             newData.modifiedBy = userId
         }
-        data.isActive = true
+        newData.isActive = true
         const docRef = await this.db.collection(collectionName).add(newData)
         return { id: docRef.id, ...newData }
     }
