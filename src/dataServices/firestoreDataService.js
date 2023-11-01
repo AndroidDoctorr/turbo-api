@@ -74,7 +74,7 @@ class FirebaseService {
         const docSnapshot = await docRef.get()
         return docSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
     }
-    updateDocument = async (collectionName, documentId, data, userId) => {
+    updateDocument = async (collectionName, documentId, data, userId, noMetaData) => {
         const docRef = this.db.collection(collectionName).doc(documentId)
         const docSnapshot = await docRef.get()
         if (!docSnapshot.exists)

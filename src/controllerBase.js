@@ -14,7 +14,7 @@ class ControllerBase {
     }
     configureRoutes() { }
 
-    basicCRUD(options) {
+    basicCRUD(options = {}) {
         // Get options, if any are defined
         const { isPublicGet, isPublicPost, noMetaData, allowUserDelete } = options || {}
 
@@ -27,11 +27,11 @@ class ControllerBase {
         ))
 
         this.router.get('/', (req, res) => handleRoute(req, res, async (req) =>
-            await this.getActiveDocuments(req.user, true)
+            await this.getActiveDocuments(req.user, isPublicGet)
         ))
 
         this.router.put('/:id', (req, res) => handleRoute(req, res, async (req) =>
-            await this.updateDocument(req.params.id, req.body, req.user)
+            await this.updateDocument(req.params.id, req.body, req.user, noMetaData)
         ))
 
         this.router.delete('/:id', (req, res) => handleRoute(req, res, async (req) =>
@@ -39,7 +39,7 @@ class ControllerBase {
         ))
     }
 
-    fullCRUD(options) {
+    fullCRUD(options = {}) {
         // Get options, if any are defined, and pass to basicCRUD
         const { noMetaData } = options || {}
         this.basicCRUD(options)
@@ -163,7 +163,7 @@ class ControllerBase {
     // TODO: GET POPULAR
 
     // UPDATE
-    updateDocument = async (documentId, data, user) => {
+    updateDocument = async (documentId, data, user, noMetaData) => {
         const db = await getDataService()
         const logger = await getLoggingService()
         const oldData = db.getDocumentById(this.collectionName, documentId)
@@ -175,7 +175,7 @@ class ControllerBase {
         const userId = !!user ? user.uid : 'anonymous'
         const filteredData = filterObjectByProps(data, this.propNames)
         validateData(filteredData, this.validationRules, db, this.collectionName)
-        const newData = await db.updateDocument(this.collectionName, documentId, filteredData, userId)
+        const newData = await db.updateDocument(this.collectionName, documentId, filteredData, userId, noMetaData)
         logger.info(`${this.collectionName}: ${documentId} updated by user ${userId}:` +
             `${getDiffString(oldData, newData)}`)
         return { id: documentId, ...newData }
@@ -211,7 +211,7 @@ class ControllerBase {
         if (!user || (!user.admin && !allowUserDelete))
             throw new AuthError('User is not authenticated')
         const userId = user.uid
-        await db.deleteDocument(this.collectionName, documentId, userId, noMetaData)
+        await db.deleteDocument(this.collectionName, documentId)
         logger.warn(`${this.collectionName}: ${documentId} - DELETED by user ${userId}`)
         return { id: documentId }
     }
