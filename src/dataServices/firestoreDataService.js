@@ -16,10 +16,10 @@ class FirebaseService {
             ...data,
         }
         if (!noMetaData) {
-            data.created = currentDate
-            data.createdBy = userId
-            data.modified = currentDate
-            data.modifiedBy = userId
+            newData.created = currentDate
+            newData.createdBy = userId
+            newData.modified = currentDate
+            newData.modifiedBy = userId
         }
         data.isActive = true
         const docRef = await this.db.collection(collectionName).add(newData)
