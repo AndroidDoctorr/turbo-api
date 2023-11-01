@@ -83,8 +83,10 @@ class FirebaseService {
         const updatedData = {
             ...docSnapshot.data(),
             ...data,
-            modified: this.getCurrentDate(),
-            modifiedBy: userId
+        }
+        if (!noMetaData && !!userId) {
+            updatedData.modified = this.getCurrentDate()
+            updatedData.modifiedBy = userId
         }
 
         await docRef.update(updatedData)
