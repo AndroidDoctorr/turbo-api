@@ -47,6 +47,7 @@ Turbo-API follows a controller-based architecture. Here's how you can create a b
     const { getDataService } = serviceFactory;
     const { handleRoute } = httpHelpers;
     const { AuthError, NoContentError, stringType, numberType, validateData, stringRule, numberRule, enumRule } = validation;
+    
     // Import data from other controllers, if necessary
     const { AUTHOR_COLLECTION } = require('./authorController');
 
@@ -83,25 +84,15 @@ Turbo-API follows a controller-based architecture. Here's how you can create a b
         }
 
         configureRoutes() {
-            this.router.post('/add', (req, res) => handleRoute(req, res, async (req) =>
-                await this.createDocument(req.body, req.user)
-            ));
-
-            this.router.get('/get/:id', (req, res) => handleRoute(req, res, async (req) =>
-                await this.getDocumentById(req.params.id, req.user, true)
-            ));
-
-            this.router.get('/getAll', (req, res) => handleRoute(req, res, async (req) =>
-                await this.getAllDocuments(req.user)
-            ));
-
-            this.router.put('/update/:id', (req, res) => handleRoute(req, res, async (req) =>
-                await this.updateDocument(req.params.id, req.body, req.user)
-            ));
-
-            this.router.delete('/delete/:id', (req, res) => handleRoute(req, res, async (req) =>
-                await this.deleteDocument(req.params.id, req.user)
-            ));
+            // Set up basic CRUD actions (create, read, update, delete)
+            this.basicCRUD({
+                isPublicGet: true,
+                isPublicPost: false,
+                noMetaData: false,
+                allowUserDelete: true,
+            }) // options are completely nullable
+            // You can also call fullCRUD(options) to set up full CRUD actions
+            // (basic CRUD + hard and soft deletion, get by user, and get inactive)
 
             // Add custom endpoints/actions like so:
             this.router.put('/:bookId/author/:authorId', (req, res) => handleRoute(req, res, async (req) =>
@@ -225,7 +216,7 @@ To start your Turbo-API, include the following in your main application file:
     exports.api = functions.https.onRequest(app)
 ```
 
-Now your Turbo-API is up and running! You can access the `/get/:id` route for books you've defined in your controller.
+Now your Turbo-API is up and running! You can access the `book/:id` route for books you've defined in your controller.
 
 ## Customization
 
@@ -312,19 +303,16 @@ More on this to come...
 
 Intended future updates:
 
+- **AWS SUPPORT!**
+- **TESTS**
+- Better error handling (add some try/catches?)
 - Validation extension
   - Make validator into a class
   - Inject validator, with default
   - Define validator in turbo-config.json?
-- Simplify controller setup even further?
-  - Add BasicCRUD and FullCRUD methods to add default endpoints
 - More configuration options
-  - Add "noMetadata" to eliminate the default "created", "createdBy", "modified", and "modifiedBy" properties from data objects **
-  - Add "publicGet" flag to controller definitions?
   - Firebase-specific configuration options
   - AWS-specific configuration options
-
-** = "quick wins"
 
 **CONTRIBUTIONS WELCOME!!**
 If you would like to add any of these updates, please feel free to make a pull request:

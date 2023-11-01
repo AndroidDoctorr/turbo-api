@@ -10,16 +10,18 @@ class FirebaseService {
         return admin.firestore.Timestamp.now()
     }
 
-    createDocument = async (collectionName, data, userId) => {
+    createDocument = async (collectionName, data, userId, noMetaData) => {
         const currentDate = this.getCurrentDate()
         const newData = {
             ...data,
-            created: currentDate,
-            createdBy: userId,
-            modified: currentDate,
-            modifiedBy: userId,
-            isActive: true,
         }
+        if (!noMetaData) {
+            newData.created = currentDate
+            newData.createdBy = userId
+            newData.modified = currentDate
+            newData.modifiedBy = userId
+        }
+        newData.isActive = true
         const docRef = await this.db.collection(collectionName).add(newData)
         return { id: docRef.id, ...newData }
     }
@@ -72,7 +74,7 @@ class FirebaseService {
         const docSnapshot = await docRef.get()
         return docSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
     }
-    updateDocument = async (collectionName, documentId, data, userId) => {
+    updateDocument = async (collectionName, documentId, data, userId, noMetaData) => {
         const docRef = this.db.collection(collectionName).doc(documentId)
         const docSnapshot = await docRef.get()
         if (!docSnapshot.exists)
@@ -81,14 +83,16 @@ class FirebaseService {
         const updatedData = {
             ...docSnapshot.data(),
             ...data,
-            modified: this.getCurrentDate(),
-            modifiedBy: userId
+        }
+        if (!noMetaData && !!userId) {
+            updatedData.modified = this.getCurrentDate()
+            updatedData.modifiedBy = userId
         }
 
         await docRef.update(updatedData)
         return { id: documentId, ...updatedData }
     }
-    archiveDocument = async (collectionName, documentId, userId) => {
+    archiveDocument = async (collectionName, documentId, userId, noMetaData) => {
         const docRef = this.db.collection(collectionName).doc(documentId)
         const docSnapshot = await docRef.get()
         if (!docSnapshot.exists)
@@ -96,27 +100,29 @@ class FirebaseService {
 
         const updatedData = {
             ...docSnapshot.data(),
-            modified: this.getCurrentDate(),
-            modifiedBy: userId,
             isActive: false,
         }
+        if (!noMetaData && !!userId) {
+            updatedData.modified = this.getCurrentDate()
+            updatedData.modifiedBy = userId
+        }
 
         await docRef.update(updatedData)
         return { id: documentId, ...updatedData }
     }
-    dearchiveDocument = async (collectionName, documentId, userId) => {
+    dearchiveDocument = async (collectionName, documentId, userId, noMetaData) => {
         const docRef = this.db.collection(collectionName).doc(documentId)
         const docSnapshot = await docRef.get()
         if (!docSnapshot.exists)
             throw new NotFoundError(`${collectionName}:${documentId} not found`)
-
         const updatedData = {
             ...docSnapshot.data(),
-            modified: this.getCurrentDate(),
-            modifiedBy: userId,
             isActive: true,
         }
-
+        if (!noMetaData && !!userId) {
+            updatedData.modified = this.getCurrentDate()
+            updatedData.modifiedBy = userId
+        }
         await docRef.update(updatedData)
         return { id: documentId, ...updatedData }
     }
@@ -125,7 +131,6 @@ class FirebaseService {
         const docSnapshot = await docRef.get()
         if (!docSnapshot.exists)
             throw new NotFoundError(`${collectionName}:${documentId} not found`)
-
         await docRef.delete()
         return { id: documentId }
     }
