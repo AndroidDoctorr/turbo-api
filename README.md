@@ -304,6 +304,7 @@ More on this to come...
 Intended future updates:
 
 - **AWS SUPPORT!**
+- **TESTS**
 - Validation extension
   - Make validator into a class
   - Inject validator, with default
