@@ -303,17 +303,14 @@ More on this to come...
 
 Intended future updates:
 
+- **AWS SUPPORT!**
 - Validation extension
   - Make validator into a class
   - Inject validator, with default
   - Define validator in turbo-config.json?
 - More configuration options
-  - Add "noMetadata" to eliminate the default "created", "createdBy", "modified", and "modifiedBy" properties from data objects **
-  - Add "publicGet" flag to controller definitions?
   - Firebase-specific configuration options
   - AWS-specific configuration options
-
-** = "quick wins"
 
 **CONTRIBUTIONS WELCOME!!**
 If you would like to add any of these updates, please feel free to make a pull request:
