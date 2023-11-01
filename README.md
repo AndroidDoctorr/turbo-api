@@ -216,7 +216,7 @@ To start your Turbo-API, include the following in your main application file:
     exports.api = functions.https.onRequest(app)
 ```
 
-Now your Turbo-API is up and running! You can access the `/get/:id` route for books you've defined in your controller.
+Now your Turbo-API is up and running! You can access the `book/:id` route for books you've defined in your controller.
 
 ## Customization
 
