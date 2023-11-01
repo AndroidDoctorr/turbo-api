@@ -305,6 +305,7 @@ Intended future updates:
 
 - **AWS SUPPORT!**
 - **TESTS**
+- Better error handling (add some try/catches?)
 - Validation extension
   - Make validator into a class
   - Inject validator, with default
