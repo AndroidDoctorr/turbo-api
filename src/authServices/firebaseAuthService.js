@@ -21,6 +21,8 @@ const createAuthenticationMiddleware = (dataService) => {
         try {
             const decodedToken = await admin.auth().verifyIdToken(idToken)
             req.user = decodedToken
+            if (req.user.disabled === true)
+                return res.status(403).json({ error: 'Account is suspended' })
             next()
         } catch (error) {
             return res.status(403).json({ error: 'Invalid Token' })
