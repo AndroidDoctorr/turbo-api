@@ -55,15 +55,15 @@ export type NumberRuleFunction = (minValue: number, maxValue: number, required: 
 export type AnyValue = string | number | boolean
 
 export type ValidationFunctions = {
-    AuthError: typeof Error
-    NotFoundError: typeof Error
-    NoContentError: typeof Error
-    ValidationError: typeof Error
-    ForbiddenError: typeof Error
-    LogicError: typeof Error
-    DependencyError: typeof Error
-    InternalError: typeof Error
-    ServiceError: typeof Error
+    AuthError: Error
+    NotFoundError: Error
+    NoContentError: Error
+    ValidationError: Error
+    ForbiddenError: Error
+    LogicError: Error
+    DependencyError: Error
+    InternalError: Error
+    ServiceError: Error
     applyDefaults: <T, TRules>(data: T, validationRules: TRules) => T
     validateData: <T, TRules>(
         data: T,
