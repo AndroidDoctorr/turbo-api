@@ -77,6 +77,4 @@ declare module 'turbo-api' {
     }
 
     export type Validation = ValidationFunctions
-
-    export type HttpHelpers = HttpHelpers
 }

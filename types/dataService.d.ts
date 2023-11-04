@@ -1,3 +1,5 @@
+import { AnyValue } from "./validation"
+
 export interface DataDocument<T> {
     id: string,
     data: T,
@@ -10,7 +12,7 @@ export interface DataService {
         data: T,
         userId: string,
         noMetaData: boolean
-    ): Promise<DataDocument>
+    ): Promise<DataDocument<T>>
 
     getDocumentById<T>(
         collectionName: string,
@@ -21,13 +23,13 @@ export interface DataService {
     getDocumentsByProp<T>(
         collectionName: string,
         propName: string,
-        propValue: any,
+        propValue: AnyValue | AnyValue[],
         includeInactive: boolean
     ): Promise<T[]>
 
     getDocumentsByProps<T>(
         collectionName: string,
-        props: Record<string, any>,
+        props: Record<string, AnyValue | AnyValue[]>,
         includeInactive: boolean
     ): Promise<T[]>
 
@@ -45,21 +47,21 @@ export interface DataService {
         data: T,
         userId: string,
         noMetaData: boolean
-    ): Promise<DataDocument>
+    ): Promise<DataDocument<T>>
 
     archiveDocument<T>(
         collectionName: string,
         documentId: string,
         userId: string,
         noMetaData: boolean
-    ): Promise<DataDocument>
+    ): Promise<DataDocument<T>>
 
     dearchiveDocument<T>(
         collectionName: string,
         documentId: string,
         userId: string,
         noMetaData: boolean
-    ): Promise<DataDocument>
+    ): Promise<DataDocument<T>>
 
     deleteDocument(collectionName: string, documentId: string): Promise<{ id: string }>
 }

@@ -44,13 +44,13 @@ export type FKeyRule = {
     required: boolean
 }
 
+export type UniqueComboRule = string[]
+
 export type StringRuleFunction = (minLength: number, maxLength: number, required: boolean, unique: boolean) => StringRule
 export type BoolRuleFunction = (required: boolean) => BoolRule
 export type FKeyRuleFunction = (reference: string, required: boolean, isNumber: boolean) => FKeyRule
 export type EnumRuleFunction = (values: (string | number)[], required: boolean, isNumber: boolean) => EnumRule
 export type NumberRuleFunction = (minValue: number, maxValue: number, required: boolean) => NumberRule
-
-export type UniqueComboRule = string[]
 
 export type AnyValue = string | number | boolean
 
