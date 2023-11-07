@@ -20,7 +20,7 @@ class ControllerBase {
         this.options = options
 
         this.router.post('/', (req, res) => handleRoute(req, res, async (req) =>
-            await this.createDocument(req.body, req.user, options.isPublicPost)
+            await this.createDocument(req.body, req.user)
         ))
 
         this.router.get('/:id', (req, res) => handleRoute(req, res, async (req) =>
@@ -36,7 +36,7 @@ class ControllerBase {
         ))
 
         this.router.delete('/:id', (req, res) => handleRoute(req, res, async (req) =>
-            await this.deleteDocument(req.params.id, req.user, options.allowUserDelete)
+            await this.deleteDocument(req.params.id, req.user)
         ))
     }
 
@@ -73,7 +73,7 @@ class ControllerBase {
         // Validate authentication
         if (!!this.options.isAdminOnly && !this.isUserAdmin(user))
             throw new AuthError('User is not authenticated')
-        const isPublicPostAllowed = !!this.options.isPublic && !!this.options.noMetaData
+        const isPublicPostAllowed = !!this.options.isPublicPost && !!this.options.noMetaData
         if (!user && !isPublicPostAllowed)
             throw new AuthError('You must be logged in to perform this action')
         // Sanitize data
