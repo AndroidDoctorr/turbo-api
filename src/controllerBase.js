@@ -85,7 +85,7 @@ class ControllerBase {
         const logger = await getLoggingService()
         if (!user && !isPublic) throw new AuthError('You must be logged in to see this')
         const userId = !!user ? user.uid : 'anonymous'
-        const data = await db.getDocumentById(this.collectionName, documentId, !!user.admin)
+        const data = await db.getDocumentById(this.collectionName, documentId, !!user && !!user.admin)
         logger.info(`${this.collectionName}: ${documentId} retrieved by ${userId}`)
         return data
     }
