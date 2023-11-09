@@ -27,7 +27,6 @@ class FirebaseService {
     }
     getDocumentById = async (collectionName, documentId, includeInactive) => {
         const docRef = this.db.collection(collectionName).doc(documentId)
-        console.log("DOCUMENT ID: " + documentId)
         const docSnapshot = await docRef.get()
         if (!docSnapshot.exists) return null
         const data = docSnapshot.data()
