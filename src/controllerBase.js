@@ -1,6 +1,7 @@
 const { AuthError, NotFoundError, applyDefaults, validateData, filterObjectByProps, ValidationError } = require('./validation')
 const { objectToString, getDiffString } = require('./string')
 const { getDataService, getLoggingService } = require('./serviceFactory')
+const { handleRoute } = require('./http')
 const express = require('express')
 
 class ControllerBase {
