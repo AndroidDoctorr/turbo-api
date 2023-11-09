@@ -31,7 +31,7 @@ class FirebaseService {
         if (!docSnapshot.exists) return null
         const data = docSnapshot.data()
         if (!data.isActive && !includeInactive) return null
-        return { id: data.id, ...data }
+        return { id: documentId, ...data }
     }
     getDocumentsByProp = async (collectionName, propName, propValue, includeInactive) => {
         const docRef = this.db.collection(collectionName)
