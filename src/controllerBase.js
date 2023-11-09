@@ -203,11 +203,6 @@ class ControllerBase {
         logger.info(`${this.collectionName} owned by user ${userId} retrieved by user ${userId}`)
         return documents
     }
-
-    // TODO: GET TRENDING
-    // TODO: GET RECENT
-    // TODO: GET POPULAR
-
     // UPDATE
     updateDocument = async (documentId, data, user) => {
         // Get services
@@ -218,10 +213,6 @@ class ControllerBase {
             throw new AuthError('User is not authenticated')
         if (!this.isUserAdmin(user))
             throw new AuthError('User is not authenticated')
-        // Make sure document exists
-        const oldData = db.getDocumentById(this.collectionName, documentId)
-        if (!oldData)
-            throw new NotFoundError(`ID ${documentId} not found in ${this.collectionName}`)
         // Sanitize data
         const filteredData = filterObjectByProps(data, this.propNames)
         validateData(filteredData, this.validationRules, db, this.collectionName)
@@ -241,8 +232,6 @@ class ControllerBase {
         // User must be creator or admin
         if (!user || !(user.admin || user.uid === data.createdBy))
             throw new AuthError('User is not authenticated')
-        const doc = db.getDocumentById(this.collectionName, documentId, false)
-        if (!doc) throw new ValidationError('Document does not exist')
         // Archive document
         const userId = !!user ? user.uid : 'anonymous'
         await db.archiveDocument(this.collectionName, documentId, userId, this.options.noMetaData)
@@ -257,9 +246,6 @@ class ControllerBase {
         const logger = await getLoggingService()
         // ADMIN ONLY
         if (this.isUserAdmin(user)) throw new AuthError('User is not authenticated')
-        // Make sure document exists
-        const doc = db.getDocumentById(this.collectionName, documentId, true)
-        if (!doc) throw new ValidationError('Document does not exist')
         // De-archive document
         const userId = !!user ? user.uid : 'anonymous'
         await db.dearchiveDocument(this.collectionName, documentId, userId, this.options.noMetaData)
@@ -275,9 +261,6 @@ class ControllerBase {
         // Validate authentication
         if (!user || !this.isUserAdmin(user) || (!!this.options.allowUserDelete && !user))
             throw new AuthError('User is not authenticated')
-        // Make sure document exists
-        const doc = db.getDocumentById(this.collectionName, documentId, true)
-        if (!doc) throw new ValidationError('Document does not exist')
         // Delete document
         const userId = user.uid
         await db.deleteDocument(this.collectionName, documentId)
