@@ -90,6 +90,7 @@ Turbo-API follows a controller-based architecture. Here's how you can create a b
                 isPublicPost: false,
                 noMetaData: false,
                 allowUserDelete: true,
+                isAdminOnly: false,
             }) // options are completely nullable
             // You can also call fullCRUD(options) to set up full CRUD actions
             // (basic CRUD + hard and soft deletion, get by user, and get inactive)
