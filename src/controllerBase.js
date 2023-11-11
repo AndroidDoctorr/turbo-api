@@ -50,6 +50,10 @@ class ControllerBase {
             this.router.get('/my', (req, res) => handleRoute(req, res, async (req) =>
                 await this.getMyDocuments(req.user)
             ))
+
+            this.router.get('/recent', (req, res) => handleRoute(req, res, async (req) =>
+                await this.getRecentDocuments(req.params.count, req.user)
+            ))
         }
 
         this.router.get('/includeInactive', (req, res) => handleRoute(req, res, async (req) =>
@@ -169,6 +173,21 @@ class ControllerBase {
         const documents = await db.getDocumentsByProps(this.collectionName, props)
         // Log and return if successful
         logger.info(`${this.collectionName} where ${objectToString(props)}\n retrieved by ${userId}`)
+        return documents
+    }
+    // GET RECENT
+    getRecentDocuments = async (count, user) => {
+        // Get services
+        const db = await getDataService()
+        const logger = await getLoggingService()
+        // Validate authentication
+        if (!!this.options.isAdminOnly && !this.isUserAdmin(user))
+            throw new AuthError('User is not authenticated')
+        // Get document(s)
+        const userId = !!user ? user.uid : 'anonymous'
+        const documents = await db.getRecentDocuments(this.collectionName, count)
+        // Log and return if successful
+        logger.info(`Recent ${this.collectionName} retrieved by user ${userId}`)
         return documents
     }
     // GET MY

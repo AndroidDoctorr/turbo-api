@@ -61,6 +61,13 @@ class FirebaseService {
         const docSnapshot = await docRef.get()
         return docSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
     }
+    getRecentDocuments = async (collectionName, count) => {
+        const docRef = this.db.collection(collectionName)
+            .orderBy('created', 'desc')
+            .limit(count)
+        const docSnapshot = await docRef.get()
+        return docSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+    }
     getMyDocuments = async (collectionName, userId) => {
         const docRef = this.db.collection(collectionName)
             .where('isActive', '==', true)
