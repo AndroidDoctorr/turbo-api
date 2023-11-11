@@ -52,7 +52,7 @@ class ControllerBase {
             ))
 
             this.router.get('/recent', (req, res) => handleRoute(req, res, async (req) =>
-                await this.getRecentDocuments(req.params.count, req.user)
+                await this.getRecentDocuments(req.params.count, req.user, options.isPublicGet)
             ))
         }
 
@@ -176,13 +176,15 @@ class ControllerBase {
         return documents
     }
     // GET RECENT
-    getRecentDocuments = async (count, user) => {
+    getRecentDocuments = async (count, user, isPublic) => {
         // Get services
         const db = await getDataService()
         const logger = await getLoggingService()
         // Validate authentication
         if (!!this.options.isAdminOnly && !this.isUserAdmin(user))
             throw new AuthError('User is not authenticated')
+        if (!user && !isPublic)
+            throw new AuthError('You must be logged in to see this')
         // Get document(s)
         const userId = !!user ? user.uid : 'anonymous'
         const documents = await db.getRecentDocuments(this.collectionName, count)
