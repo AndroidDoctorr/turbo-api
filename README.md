@@ -306,6 +306,10 @@ Intended future updates:
 
 - **AWS SUPPORT!**
 - **TESTS**
+- Add admin functions to auth service
+- TS type definitions
+- Search/query methods
+- Add orderBy parameter to GET methods
 - Better error handling (add some try/catches?)
 - Validation extension
   - Make validator into a class
