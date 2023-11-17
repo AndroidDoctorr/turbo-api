@@ -4,6 +4,7 @@ const { NotFoundError } = require('../validation')
 class FirebaseService {
     constructor() {
         this.db = admin.firestore()
+        this.defaultLimit = 50
     }
 
     getCurrentDate() {
@@ -33,20 +34,27 @@ class FirebaseService {
         if (!data.isActive && !includeInactive) return null
         return { id: documentId, ...data }
     }
-    getDocumentsByProp = async (collectionName, propName, propValue, includeInactive) => {
+    getDocumentsByProp = async (collectionName, propName, propValue, includeInactive, limit, orderBy) => {
+        const queryLimit = isNaN(limit) ? this.defaultLimit : limit
         const docRef = this.db.collection(collectionName)
             .where(propName, '==', propValue)
         if (!includeInactive)
             docRef.where('isActive', '==', true)
+        docRef.limit(queryLimit)
+        docRef.orderBy(!!orderBy ? orderBy : propName)
         const docSnapshot = await docRef.get()
         return docSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
     }
-    getDocumentsByProps = async (collectionName, props, includeInactive) => {
+    getDocumentsByProps = async (collectionName, props, includeInactive, limit, orderBy) => {
+        const queryLimit = isNaN(limit) ? this.defaultLimit : limit
         const docRef = this.db.collection(collectionName)
         for (const prop in props)
             docRef = docRef.where(prop, '==', props[prop])
         if (!includeInactive)
             docRef.where('isActive', '==', true)
+        docRef.limit(queryLimit)
+        if (orderBy)
+            docRef.orderBy(orderBy)
         const docSnapshot = await docRef.get()
         return docSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
     }
@@ -73,34 +81,47 @@ class FirebaseService {
         const docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
         return docs
     }
-    getAllDocuments = async (collectionName) => {
+    getAllDocuments = async (collectionName, limit, orderBy) => {
+        const queryLimit = isNaN(limit) ? this.defaultLimit : limit
         const docRef = this.db.collection(collectionName)
+        docRef.limit(queryLimit)
+        if (orderBy) docRef.orderBy(orderBy)
         const docSnapshot = await docRef.get()
         return docSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
     }
-    getActiveDocuments = async (collectionName) => {
+    getActiveDocuments = async (collectionName, limit, orderBy) => {
+        const queryLimit = isNaN(limit) ? this.defaultLimit : limit
         const docRef = this.db.collection(collectionName)
             .where('isActive', '==', true)
+        docRef.limit(queryLimit)
+        if (orderBy) docRef.orderBy(orderBy)
         const docSnapshot = await docRef.get()
         return docSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
     }
-    getRecentDocuments = async (collectionName, count) => {
+    getRecentDocuments = async (collectionName, limit) => {
+        const queryLimit = isNaN(limit) ? this.defaultLimit : limit
         const docRef = this.db.collection(collectionName)
             .orderBy('created', 'desc')
-            .limit(count)
+            .limit(queryLimit)
         const docSnapshot = await docRef.get()
         return docSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
     }
-    getMyDocuments = async (collectionName, userId) => {
+    getMyDocuments = async (collectionName, userId, limit, orderBy) => {
+        const queryLimit = isNaN(limit) ? this.defaultLimit : limit
         const docRef = this.db.collection(collectionName)
             .where('isActive', '==', true)
             .where('createdBy', '==', userId)
+        docRef.limit(queryLimit)
+        if (orderBy) docRef.orderBy(orderBy)
         const docSnapshot = await docRef.get()
         return docSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
     }
-    getUserDocuments = async (collectionName, userId) => {
+    getUserDocuments = async (collectionName, userId, limit, orderBy) => {
+        const queryLimit = isNaN(limit) ? this.defaultLimit : limit
         const docRef = this.db.collection(collectionName)
             .where('createdBy', '==', userId)
+        docRef.limit(queryLimit)
+        if (orderBy) docRef.orderBy(orderBy)
         const docSnapshot = await docRef.get()
         return docSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
     }
