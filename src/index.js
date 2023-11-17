@@ -22,7 +22,7 @@ module.exports.buildApp = async () => {
     const authMiddleware = getAuthService()
     const dataService = getDataService()
     // Add service-specific middleware for authorization
-    app.use(authMiddleware.createAuthenticationMiddleware(dataService))
+    app.use(authMiddleware(dataService))
 
     // Load and use controllers dynamically
     const controllersPath = path.join(process.cwd(), 'controllers')
