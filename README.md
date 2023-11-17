@@ -308,7 +308,6 @@ Intended future updates:
 - **TESTS**
 - Add admin functions to auth service
 - TS type definitions
-- Add orderBy parameter to GET methods
 - Better error handling (add some try/catches?)
 - Validation extension
   - Make validator into a class
