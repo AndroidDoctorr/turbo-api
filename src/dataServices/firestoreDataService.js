@@ -50,6 +50,29 @@ class FirebaseService {
         const docSnapshot = await docRef.get()
         return docSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
     }
+    queryDocumentsByProp = async (collectionName, propName, queryText, limit, orderBy) => {
+        const queryLimit = isNaN(limit) ? this.defaultLimit : limit
+        const docRef = this.db.collection(collectionName)
+        const query = docRef
+            .where(propName, '>=', queryText.toLowerCase())
+            .where(propName, '<=', queryText.toLowerCase() + '\uf8ff')
+            .orderBy(!!orderBy ? orderBy : propName)
+            .limit(queryLimit)
+        const snapshot = await query.get()
+        const docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        return docs
+    }
+    getDocumentsWhereInProp = async (collectionName, propName, values, limit, orderBy) => {
+        const queryLimit = isNaN(limit) ? this.defaultLimit : limit
+        const docRef = this.db.collection(collectionName)
+        const query = docRef
+            .where(propName, 'in', values)
+            .orderBy(!!orderBy ? orderBy : propName)
+            .limit(queryLimit)
+        const snapshot = await query.get()
+        const docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        return docs
+    }
     getAllDocuments = async (collectionName) => {
         const docRef = this.db.collection(collectionName)
         const docSnapshot = await docRef.get()
@@ -140,29 +163,6 @@ class FirebaseService {
             throw new NotFoundError(`${collectionName}:${documentId} not found`)
         await docRef.delete()
         return { id: documentId }
-    }
-    queryDocumentsByProp = async (collectionName, propName, queryText, limit, orderBy) => {
-        const queryLimit = isNaN(limit) ? this.defaultLimit : limit
-        const docRef = this.db.collection(collectionName)
-        const query = docRef
-            .where(propName, '>=', queryText.toLowerCase())
-            .where(propName, '<=', queryText.toLowerCase() + '\uf8ff')
-            .orderBy(!!orderBy ? orderBy : propName)
-            .limit(queryLimit)
-        const snapshot = await query.get()
-        const docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-        return docs
-    }
-    getDocumentsWhereInProp = async (collectionName, propName, values, limit, orderBy) => {
-        const queryLimit = isNaN(limit) ? this.defaultLimit : limit
-        const docRef = this.db.collection(collectionName)
-        const query = docRef
-            .where(propName, 'in', values)
-            .orderBy(!!orderBy ? orderBy : propName)
-            .limit(queryLimit)
-        const snapshot = await query.get()
-        const docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-        return docs
     }
 }
 
