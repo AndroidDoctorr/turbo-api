@@ -29,7 +29,7 @@ const getLoggingService = async () => {
     }
 }
 
-const getAuthService = async (serviceName) => {
+const getAuthService = async () => {
     const config = await getConfig()
     // Default to Firestore if not specified
     const serviceName = config.loggingService || 'firestore'
