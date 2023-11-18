@@ -34,7 +34,7 @@ class FirebaseService {
         if (!data.isActive && !includeInactive) return null
         return { id: documentId, ...data }
     }
-    getDocumentsByProp = async (collectionName, propName, propValue, includeInactive, limit, orderBy) => {
+    getDocumentsByProp = async (collectionName, propName, propValue, limit, orderBy, includeInactive) => {
         const queryLimit = isNaN(limit) ? this.defaultLimit : limit
         const docRef = this.db.collection(collectionName)
             .where(propName, '==', propValue)
@@ -45,7 +45,7 @@ class FirebaseService {
         const docSnapshot = await docRef.get()
         return docSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
     }
-    getDocumentsByProps = async (collectionName, props, includeInactive, limit, orderBy) => {
+    getDocumentsByProps = async (collectionName, props, limit, orderBy, includeInactive) => {
         const queryLimit = isNaN(limit) ? this.defaultLimit : limit
         const docRef = this.db.collection(collectionName)
         for (const prop in props)
