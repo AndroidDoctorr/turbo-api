@@ -175,6 +175,40 @@ class ControllerBase {
         logger.info(`${this.collectionName} where ${objectToString(props)}\n retrieved by ${userId}`)
         return documents
     }
+    // QUERY DOCUMENTS BY PROP
+    queryDocumentsByProp = async (prop, value, user, isPublic) => {
+        // Get services
+        const db = await getDataService()
+        const logger = await getLoggingService()
+        // Validate authentication
+        if (!!this.options.isAdminOnly && !this.isUserAdmin(user))
+            throw new AuthError('User is not authenticated')
+        if (!user && !isPublic)
+            throw new AuthError('You must be logged in to see this')
+        // Get document(s)
+        const userId = !!user ? user.uid : 'anonymous'
+        const documents = await db.queryDocumentsByProp(this.collectionName, prop, value)
+        // Log and return if successful
+        logger.info(`${this.collectionName} where ${prop} starts with ${value} retrieved by ${userId}`)
+        return documents
+    }
+    // GET DOCUMENTS WHERE IN PROP
+    getDocumentsWhereInProp = async (prop, values, user, isPublic) => {
+        // Get services
+        const db = await getDataService()
+        const logger = await getLoggingService()
+        // Validate authentication
+        if (!!this.options.isAdminOnly && !this.isUserAdmin(user))
+            throw new AuthError('User is not authenticated')
+        if (!user && !isPublic)
+            throw new AuthError('You must be logged in to see this')
+        // Get document(s)
+        const userId = !!user ? user.uid : 'anonymous'
+        const documents = await db.getDocumentsWhereInProp(this.collectionName, prop, values)
+        // Log and return if successful
+        logger.info(`${this.collectionName} where ${prop} in ${values.join(', ')} retrieved by ${userId}`)
+        return documents
+    }
     // GET RECENT
     getRecentDocuments = async (count, user, isPublic) => {
         // Get services
