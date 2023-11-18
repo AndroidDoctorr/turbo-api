@@ -1,4 +1,3 @@
-/*
 const winston = require('winston')
 const WinstonCloudWatch = require('winston-cloudwatch')
 
@@ -50,4 +49,3 @@ class WinstonLogger {
 }
 
 module.exports = WinstonLogger
-*/
