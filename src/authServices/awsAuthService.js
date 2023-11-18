@@ -1,28 +1,41 @@
-/*
-const createAuthenticationMiddleware = (dataService) => {
-    return async (event, context) => {
-        const token = event.headers.Authorization || event.headers.authorization
-        if (!token) { return }
+const { CognitoIdentityServiceProvider } = require('aws-sdk')
+
+const createAuthenticationMiddleware = () => {
+    const cognito = new CognitoIdentityServiceProvider()
+
+    return async (req, res, next) => {
+        const authorizationHeader = req.headers.authorization
+        const handleInvalidHeader = () => {
+            return res.status(400).json({ error: 'Invalid Authorization Header' })
+        }
+
+        if (!authorizationHeader) return next()
+
+        const tokenParts = authorizationHeader.split(' ')
+
+        if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
+            return handleInvalidHeader()
+        }
+
+        const accessToken = tokenParts[1]
+
         try {
-            const user = await verifyTokenAndGetUser(token, dataService)
-            if (!user) {
-                return {
-                    statusCode: 403,
-                    body: JSON.stringify({ error: 'Unauthorized' }),
-                }
+            // Validate the access token using Cognito
+            const user = await cognito.getUser({ AccessToken: accessToken }).promise()
+
+            req.user = {
+                userId: user.Username,
+                email: user.UserAttributes.find(attr => attr.Name === 'email').Value,
+                // Add any other relevant user information
             }
-            event.user = user
-            return event
+
+            next()
         } catch (error) {
-            return {
-                statusCode: 403,
-                body: JSON.stringify({ error: 'Unauthorized' }),
-            }
+            return res.status(403).json({ error: 'Invalid Token' })
         }
     }
 }
 
-async function verifyTokenAndGetUser(token, dataService) {
-    return await dataService.validateToken(token)
+module.exports = {
+    createAuthenticationMiddleware,
 }
-*/
