@@ -58,26 +58,28 @@ class FirebaseService {
         const docSnapshot = await docRef.get()
         return docSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
     }
-    queryDocumentsByProp = async (collectionName, propName, queryText, limit, orderBy) => {
+    queryDocumentsByProp = async (collectionName, propName, queryText, limit, orderBy, includeInactive) => {
         const queryLimit = isNaN(limit) ? this.defaultLimit : limit
         const docRef = this.db.collection(collectionName)
-        const query = docRef
-            .where(propName, '>=', queryText.toLowerCase())
+        docRef.where(propName, '>=', queryText.toLowerCase())
             .where(propName, '<=', queryText.toLowerCase() + '\uf8ff')
             .orderBy(!!orderBy ? orderBy : propName)
             .limit(queryLimit)
-        const snapshot = await query.get()
+        if (!includeInactive)
+            docRef.where('isActive', '==', true)
+        const snapshot = await docRef.get()
         const docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
         return docs
     }
-    getDocumentsWhereInProp = async (collectionName, propName, values, limit, orderBy) => {
+    getDocumentsWhereInProp = async (collectionName, propName, values, limit, orderBy, includeInactive) => {
         const queryLimit = isNaN(limit) ? this.defaultLimit : limit
         const docRef = this.db.collection(collectionName)
-        const query = docRef
-            .where(propName, 'in', values)
+        docRef.where(propName, 'in', values)
             .orderBy(!!orderBy ? orderBy : propName)
             .limit(queryLimit)
-        const snapshot = await query.get()
+        if (!includeInactive)
+            docRef.where('isActive', '==', true)
+        const snapshot = await docRef.get()
         const docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
         return docs
     }
