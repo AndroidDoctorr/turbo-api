@@ -102,7 +102,7 @@ const applyDefaults = (data, rules) => {
     for (const rule in rules) {
         if (
             !newData.hasOwnProperty(rule) &&
-            rules.hasOwnProperty(rule) &&
+            !!rules[rule] &&
             rules[rule].default !== undefined &&
             newData[rule] === undefined
         )
