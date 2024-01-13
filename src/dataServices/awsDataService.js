@@ -1,192 +1,440 @@
-/*
-const { DynamoDB } = require('aws-sdk')
+const AWS = require('aws-sdk')
 const { NotFoundError } = require('../validation')
 
-module.exports = class DynamoDBService {
-    constructor(config) {
-        this.config = config
-        this.dynamodb = new DynamoDB(this.config)
+class AWSDynamoDBService {
+    constructor() {
+        this.dynamoDB = new AWS.DynamoDB.DocumentClient()
+        this.defaultLimit = 50
     }
 
-    async createDocument(tableName, data, userId) {
-        const item = this.mapDataToItem(data)
-        item.created = { N: Date.now().toString() }
-        item.createdBy = { S: userId }
-        item.modified = { N: Date.now().toString() }
-        item.modifiedBy = { S: userId }
-        const params = {
-            TableName: tableName,
-            Item: item,
+    getCurrentDate() {
+        return new Date().toISOString()
+    }
+
+    createDocument = async (tableName, data, userId, noMetaData) => {
+        const currentDate = this.getCurrentDate()
+        const newData = {
+            ...data,
         }
-        await this.dynamodb.putItem(params).promise()
-        return { id: data.id, ...data }
-    }
-
-    async getDocumentById(tableName, documentId) {
-        const params = {
-            TableName: tableName,
-            Key: { id: { S: documentId } },
+        if (!noMetaData) {
+            newData.created = currentDate
+            newData.createdBy = userId
+            newData.modified = currentDate
+            newData.modifiedBy = userId
         }
-        const response = await this.dynamodb.getItem(params).promise()
-        const item = response.Item
+        newData.isActive = true
 
-        if (!item)
-            throw new NotFoundError(`${tableName}:${documentId} not found`)
-
-        return item
-    }
-
-    async getDocumentsByProp(tableName, propName, propValue, includeInactive) {
         const params = {
             TableName: tableName,
-            ExpressionAttributeNames: { '#propName': propName },
-            ExpressionAttributeValues: { ':propValue': propValue },
-            FilterExpression: '#propName = :propValue',
+            Item: newData,
+        }
+
+        await this.dynamoDB.put(params).promise()
+        return { id: newData.id, ...newData }
+    }
+
+    getDocumentById = async (tableName, documentId, includeInactive) => {
+        const params = {
+            TableName: tableName,
+            Key: {
+                id: documentId,
+            },
+        }
+
+        try {
+            const result = await this.dynamoDB.get(params).promise()
+
+            if (!result.Item) {
+                return null
+            }
+
+            const data = result.Item
+
+            if (!data.isActive && !includeInactive) {
+                return null
+            }
+
+            return { id: documentId, ...data }
+        } catch (error) {
+            console.error('Error getting document by ID:', error)
+            throw error
+        }
+    }
+
+    getDocumentsByProp = async (tableName, propName, propValue, includeInactive, limit, orderBy) => {
+        const queryLimit = isNaN(limit) ? this.defaultLimit : limit
+
+        const params = {
+            TableName: tableName,
+            IndexName: propName + '-index',
+            KeyConditionExpression: `${propName} = :value`,
+            ExpressionAttributeValues: {
+                ':value': propValue,
+            },
+            Limit: queryLimit,
+            ScanIndexForward: orderBy !== undefined,
         }
 
         if (!includeInactive) {
-            params.ExpressionAttributeNames['#isActive'] = 'isActive'
+            params.FilterExpression = 'isActive = :isActive'
             params.ExpressionAttributeValues[':isActive'] = true
-            params.FilterExpression += ' AND #isActive = :isActive'
         }
 
-        const data = await this.dynamodb.scan(params).promise()
-        return data.Items.map(item => this.mapItemToData(item))
+        if (orderBy) {
+            params.ScanIndexForward = true
+        }
+
+        try {
+            const result = await this.dynamoDB.query(params).promise()
+
+            return result.Items.map((item) => ({ id: item.id, ...item }))
+        } catch (error) {
+            console.error('Error getting documents by property:', error)
+            throw error
+        }
     }
 
-    async getDocumentsByProps(tableName, props, includeInactive) {
-        // Initialize the FilterExpression and ExpressionAttributeValues
-        const filterExpressionParts = []
-        const expressionAttributeValues = {}
-        // Iterate through the props object and construct the filter conditions
+    getDocumentsByProps = async (tableName, props, includeInactive, limit, orderBy) => {
+        const queryLimit = isNaN(limit) ? this.defaultLimit : limit
+
+        const params = {
+            TableName: tableName,
+            Limit: queryLimit,
+            ScanIndexForward: orderBy !== undefined, // Set to false for descending order
+        }
+
         for (const prop in props) {
-            const attributeName = `#${prop}`
-            const attributeValue = `:${prop}`
-            filterExpressionParts.push(`${attributeName} = ${attributeValue}`)
-            expressionAttributeValues[attributeValue] = props[prop]
-        }
-        // Add the isActive condition if necessary
-        if (!includeInactive) {
-            filterExpressionParts.push('#isActive = :isActive')
-            expressionAttributeValues[':isActive'] = true
-        }
-        // Join the filter conditions with 'AND' to form the FilterExpression
-        const filterExpression = filterExpressionParts.join(' AND ')
-        // Construct the query parameters
-        const params = {
-            TableName: tableName,
-            FilterExpression: filterExpression,
-            ExpressionAttributeNames: {},
-            ExpressionAttributeValues: expressionAttributeValues,
-        }
-        // Populate ExpressionAttributeNames with attribute names
-        for (const prop in props)
-            params.ExpressionAttributeNames[`#${prop}`] = prop
-        // Add the 'isActive' attribute name if necessary
-        if (!includeInactive)
-            params.ExpressionAttributeNames['#isActive'] = 'isActive'
+            params.FilterExpression = params.FilterExpression
+                ? `${params.FilterExpression} AND ${prop} = :${prop}`
+                : `${prop} = :${prop}`
 
-        const data = await this.dynamodb.scan(params).promise()
-        return data.Items.map(item => this.mapItemToData(item))
-    }
-
-    async getAllDocuments(tableName) {
-        const params = {
-            TableName: tableName,
-        }
-
-        const data = await this.dynamodb.scan(params).promise()
-        return data.Items.map(item => this.mapItemToData(item))
-    }
-
-    async getActiveDocuments(tableName) {
-        const params = {
-            TableName: tableName,
-            ExpressionAttributeNames: {
-                '#isActive': 'isActive',
-            },
-            ExpressionAttributeValues: {
-                ':isActive': true,
-            },
-            FilterExpression: '#isActive = :isActive',
-        }
-
-        const data = await this.dynamodb.scan(params).promise()
-        return data.Items.map(item => this.mapItemToData(item))
-    }
-
-    async getMyDocuments(tableName, userId) {
-        const params = {
-            TableName: tableName,
-            ExpressionAttributeNames: {
-                '#isActive': 'isActive',
-                '#createdBy': 'createdBy',
-            },
-            ExpressionAttributeValues: {
-                ':isActive': true,
-                ':userId': userId,
-            },
-            FilterExpression: '#isActive = :isActive AND #createdBy = :userId',
-        }
-
-        const data = await this.dynamodb.scan(params).promise()
-        return data.Items.map(item => this.mapItemToData(item))
-    }
-
-    async getUserDocuments(tableName, userId) {
-        const params = {
-            TableName: tableName,
-            ExpressionAttributeNames: {
-                '#createdBy': 'createdBy',
-            },
-            ExpressionAttributeValues: {
-                ':userId': userId,
-            },
-            FilterExpression: '#createdBy = :userId',
-        }
-
-        const data = await this.dynamodb.scan(params).promise()
-        return data.Items.map(item => this.mapItemToData(item))
-    }
-
-    async archiveDocument(tableName, documentId, userId) {
-        return this.updateDocument(tableName, documentId, { isActive: false }, userId)
-    }
-
-    async dearchiveDocument(tableName, documentId, userId) {
-        return this.updateDocument(tableName, documentId, { isActive: true }, userId)
-    }
-
-    async deleteDocument(tableName, documentId) {
-        const params = {
-            TableName: tableName,
-            Key: { id: { S: documentId } },
-        }
-
-        await this.dynamodb.deleteItem(params).promise()
-        return { id: documentId }
-    }
-
-    mapDataToItem(data) {
-        const item = {}
-        for (const [key, value] of Object.entries(data)) {
-            if (this.schema[key]) {
-                const attributeType = this.schema[key]
-                item[key] = this.mapValueToAttributeType(value, attributeType)
+            params.ExpressionAttributeValues = {
+                ...params.ExpressionAttributeValues,
+                [`:${prop}`]: props[prop],
             }
         }
-        return item
+
+        if (!includeInactive) {
+            params.FilterExpression = params.FilterExpression
+                ? `${params.FilterExpression} AND isActive = :isActive`
+                : 'isActive = :isActive'
+
+            params.ExpressionAttributeValues[':isActive'] = true
+        }
+
+        if (orderBy) {
+            params.ScanIndexForward = true // Set to true for ascending order
+        }
+
+        try {
+            const result = await this.dynamoDB.scan(params).promise()
+
+            return result.Items.map((item) => ({ id: item.id, ...item }))
+        } catch (error) {
+            console.error('Error getting documents by properties:', error)
+            throw error
+        }
     }
 
-    mapValueToAttributeType(value, attributeType) {
-        if (attributeType === 'S') {
-            return { S: value }
-        } else if (attributeType === 'N') {
-            return { N: value.toString() }
-        } else if (attributeType === 'BOOL') {
-            return { BOOL: value }
+    queryDocumentsByProp = async (tableName, propName, queryText, limit, orderBy) => {
+        const queryLimit = isNaN(limit) ? this.defaultLimit : limit
+
+        const params = {
+            TableName: tableName,
+            KeyConditionExpression: `${propName} BETWEEN :start AND :end`,
+            ExpressionAttributeValues: {
+                ':start': queryText.toLowerCase(),
+                ':end': queryText.toLowerCase() + '\uf8ff',
+            },
+            Limit: queryLimit,
+            ScanIndexForward: orderBy !== undefined, // Set to false for descending order
         }
-        // Other data types??
+
+        if (orderBy) {
+            params.ScanIndexForward = true // Set to true for ascending order
+        }
+
+        try {
+            const result = await this.dynamoDB.query(params).promise()
+
+            return result.Items.map((item) => ({ id: item.id, ...item }))
+        } catch (error) {
+            console.error('Error querying documents by property:', error)
+            throw error
+        }
+    }
+
+    getDocumentsWhereInProp = async (tableName, propName, values, limit, orderBy) => {
+        const queryLimit = isNaN(limit) ? this.defaultLimit : limit
+
+        const params = {
+            TableName: tableName,
+            ScanIndexForward: orderBy !== undefined, // Set to false for descending order
+            Limit: queryLimit,
+        }
+
+        const placeholders = values.map((value, index) => `:value${index}`)
+        const expression = placeholders.join(', ')
+
+        params.FilterExpression = `${propName} IN (${expression})`
+
+        values.forEach((value, index) => {
+            params.ExpressionAttributeValues[`:value${index}`] = value
+        })
+
+        if (orderBy) {
+            params.ScanIndexForward = true // Set to true for ascending order
+        }
+
+        try {
+            const result = await this.dynamoDB.scan(params).promise()
+
+            return result.Items.map((item) => ({ id: item.id, ...item }))
+        } catch (error) {
+            console.error('Error getting documents where property is in values:', error)
+            throw error
+        }
+    }
+
+    getAllDocuments = async (tableName, limit, orderBy) => {
+        const queryLimit = isNaN(limit) ? this.defaultLimit : limit
+
+        const params = {
+            TableName: tableName,
+            ScanIndexForward: orderBy !== undefined, // Set to false for descending order
+            Limit: queryLimit,
+        }
+
+        if (orderBy) {
+            params.ScanIndexForward = true // Set to true for ascending order
+        }
+
+        try {
+            const result = await this.dynamoDB.scan(params).promise()
+
+            return result.Items.map((item) => ({ id: item.id, ...item }))
+        } catch (error) {
+            console.error('Error getting all documents:', error)
+            throw error
+        }
+    }
+
+    getActiveDocuments = async (tableName, limit, orderBy) => {
+        const queryLimit = isNaN(limit) ? this.defaultLimit : limit
+
+        const params = {
+            TableName: tableName,
+            IndexName: 'isActive-index',
+            KeyConditionExpression: 'isActive = :isActive',
+            ExpressionAttributeValues: {
+                ':isActive': true,
+            },
+            ScanIndexForward: orderBy !== undefined,
+            Limit: queryLimit,
+        }
+
+        if (orderBy) {
+            params.ScanIndexForward = true
+        }
+
+        try {
+            const result = await this.dynamoDB.query(params).promise()
+
+            return result.Items.map((item) => ({ id: item.id, ...item }))
+        } catch (error) {
+            console.error('Error getting active documents:', error)
+            throw error
+        }
+    }
+
+    getRecentDocuments = async (tableName, limit) => {
+        const queryLimit = isNaN(limit) ? this.defaultLimit : limit
+
+        const params = {
+            TableName: tableName,
+            ScanIndexForward: false, // Sort in descending order by 'created'
+            Limit: queryLimit,
+            IndexName: 'created-index', // Assuming an index named 'created-index' on the 'created' attribute
+        }
+
+        try {
+            const result = await this.dynamoDB.scan(params).promise()
+
+            return result.Items.map((item) => ({ id: item.id, ...item }))
+        } catch (error) {
+            console.error('Error getting recent documents:', error)
+            throw error
+        }
+    }
+
+    getMyDocuments = async (tableName, userId, limit, orderBy) => {
+        const queryLimit = isNaN(limit) ? this.defaultLimit : limit
+
+        const params = {
+            TableName: tableName,
+            IndexName: 'isActive-createdBy-index', // Assuming an index named 'isActive-createdBy-index'
+            KeyConditionExpression: 'createdBy = :userId',
+            ExpressionAttributeValues: {
+                ':userId': userId,
+            },
+            ScanIndexForward: orderBy !== undefined, // Set to false for descending order
+            Limit: queryLimit,
+        }
+
+        if (!orderBy) {
+            params.ScanIndexForward = true // Set to true for ascending order
+        }
+
+        try {
+            const result = await this.dynamoDB.query(params).promise()
+
+            return result.Items.map((item) => ({ id: item.id, ...item }))
+        } catch (error) {
+            console.error('Error getting documents created by user:', error)
+            throw error
+        }
+    }
+
+    getUserDocuments = async (tableName, userId, limit, orderBy) => {
+        const queryLimit = isNaN(limit) ? this.defaultLimit : limit
+
+        const params = {
+            TableName: tableName,
+            IndexName: 'createdBy-index', // Assuming an index named 'createdBy-index'
+            KeyConditionExpression: 'createdBy = :userId',
+            ExpressionAttributeValues: {
+                ':userId': userId,
+            },
+            ScanIndexForward: orderBy !== undefined, // Set to false for descending order
+            Limit: queryLimit,
+        }
+
+        if (!orderBy) {
+            params.ScanIndexForward = true // Set to true for ascending order
+        }
+
+        try {
+            const result = await this.dynamoDB.query(params).promise()
+
+            return result.Items.map((item) => ({ id: item.id, ...item }))
+        } catch (error) {
+            console.error('Error getting documents by user:', error)
+            throw error
+        }
+    }
+
+    updateDocument = async (tableName, documentId, data, userId, noMetaData) => {
+        const params = {
+            TableName: tableName,
+            Key: {
+                id: documentId,
+            },
+            ReturnValues: 'ALL_NEW', // Return the updated item
+        }
+
+        try {
+            const result = await this.dynamoDB.update(params).promise()
+
+            if (!result.Attributes) {
+                throw new NotFoundError(`${tableName}:${documentId} not found`)
+            }
+
+            const updatedData = {
+                ...result.Attributes,
+                ...data,
+            }
+
+            if (!noMetaData && userId) {
+                updatedData.modified = this.getCurrentDate()
+                updatedData.modifiedBy = userId
+            }
+
+            return { id: documentId, ...updatedData }
+        } catch (error) {
+            console.error('Error updating document:', error)
+            throw error
+        }
+    }
+
+    archiveDocument = async (tableName, documentId, userId, noMetaData) => {
+        const params = {
+            TableName: tableName,
+            Key: {
+                id: documentId,
+            },
+            ReturnValues: 'ALL_NEW', // Return the updated item
+        }
+
+        try {
+            const result = await this.dynamoDB.update(params).promise()
+
+            if (!result.Attributes) {
+                throw new NotFoundError(`${tableName}:${documentId} not found`)
+            }
+
+            const updatedData = {
+                ...result.Attributes,
+                isActive: false,
+            }
+
+            if (!noMetaData && userId) {
+                updatedData.modified = this.getCurrentDate()
+                updatedData.modifiedBy = userId
+            }
+
+            return { id: documentId, ...updatedData }
+        } catch (error) {
+            console.error('Error archiving document:', error)
+            throw error
+        }
+    }
+
+    dearchiveDocument = async (tableName, documentId, userId, noMetaData) => {
+        const params = {
+            TableName: tableName,
+            Key: {
+                id: documentId,
+            },
+            ReturnValues: 'ALL_NEW', // Return the updated item
+        }
+
+        try {
+            const result = await this.dynamoDB.update(params).promise()
+
+            if (!result.Attributes) {
+                throw new NotFoundError(`${tableName}:${documentId} not found`)
+            }
+
+            const updatedData = {
+                ...result.Attributes,
+                isActive: true,
+            }
+
+            if (!noMetaData && userId) {
+                updatedData.modified = this.getCurrentDate()
+                updatedData.modifiedBy = userId
+            }
+
+            return { id: documentId, ...updatedData }
+        } catch (error) {
+            console.error('Error dearchiving document:', error)
+            throw error
+        }
+    }
+
+    deleteDocument = async (tableName, documentId) => {
+        const params = {
+            TableName: tableName,
+            Key: { id: documentId },
+        }
+
+        const result = await this.dynamoDB.delete(params).promise()
+        if (!result.Attributes) {
+            throw new NotFoundError(`${tableName}:${documentId} not found`)
+        }
+
+        return { id: documentId }
     }
 }
-*/
+
+module.exports = AWSDynamoDBService
