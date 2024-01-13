@@ -6,16 +6,11 @@ const numberType = typeof 1
 const boolType = typeof true
 const arrType = typeof []
 
-const stringRule = (minLength, maxLength, required, unique) =>
-    { type: stringType, minLength, maxLength, unique, required }
-const boolRule = (required) =>
-    { type: boolType, required }
-const fKeyRule = (reference, required, isNumber) =>
-    { type: isNumber ? numberType : stringType, reference, required }
-const enumRule = (values, required, isNumber) =>
-    { type: isNumber ? numberType : stringType, values, required }
-const numberRule = (minValue, maxValue, required) =>
-    { type: numberType, minValue, maxValue, required }
+const stringRule = (minLength, maxLength, required, unique) => { type: stringType, minLength, maxLength, unique, required }
+const boolRule = (required) => { type: boolType, required }
+const fKeyRule = (reference, required, isNumber) => { type: isNumber ? numberType : stringType, reference, required }
+const enumRule = (values, required, isNumber) => { type: isNumber ? numberType : stringType, values, required }
+const numberRule = (minValue, maxValue, required) => { type: numberType, minValue, maxValue, required }
 
 // Custom Error Types
 // 2##
@@ -107,6 +102,7 @@ const applyDefaults = (data, rules) => {
     for (const rule in rules) {
         if (
             !newData.hasOwnProperty(rule) &&
+            rules.hasOwnProperty(rule) &&
             rules[rule].default !== undefined &&
             newData[rule] === undefined
         )
