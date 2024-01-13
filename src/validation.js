@@ -127,9 +127,9 @@ const validateProp = async (prop, data, rule, dbService, collectionName) => {
     // Determine whether the property is required
     const value = data[prop]
     const valueIsNull = value === undefined || value === null
-    const isRequired = validateCondition(prop, data, rule.required)
+    const isRequired = validateCondition(prop, data, !!rule && rule.required)
     if (isRequired && valueIsNull) throw new ValidationError(`Prop ${prop} is required but is null`)
-    if (!!rule.condition)
+    if (!!rule && !!rule.condition)
         if (validateCondition(prop, data, rule.condition) == valueIsNull)
             throw new ValidationError(`Prop ${prop} fails conditional requirement`)
     if (valueIsNull) return
