@@ -6,11 +6,11 @@ const numberType = typeof 1
 const boolType = typeof true
 const arrType = typeof []
 
-const stringRule = (minLength, maxLength, required, unique) => { type: stringType, minLength, maxLength, unique, required }
-const boolRule = (required) => { type: boolType, required }
-const fKeyRule = (reference, required, isNumber) => { type: isNumber ? numberType : stringType, reference, required }
-const enumRule = (values, required, isNumber) => { type: isNumber ? numberType : stringType, values, required }
-const numberRule = (minValue, maxValue, required) => { type: numberType, minValue, maxValue, required }
+const stringRule = (minLength, maxLength, required, unique) => { return { type: stringType, minLength, maxLength, unique, required } }
+const boolRule = (required) => { return { type: boolType, required } }
+const fKeyRule = (reference, required, isNumber) => { return { type: isNumber ? numberType : stringType, reference, required } }
+const enumRule = (values, required, isNumber) => { return { type: isNumber ? numberType : stringType, values, required } }
+const numberRule = (minValue, maxValue, required) => { return { type: numberType, minValue, maxValue, required } }
 
 // Custom Error Types
 // 2##
@@ -146,6 +146,7 @@ const validateProp = async (prop, data, rule, dbService, collectionName) => {
 // BASIC VALIDATORS
 // Validate the property type, if specified
 const validateType = (prop, value, rule) => {
+    if (!rule) return
     if (!rule.type) return
     // Check value type
     if (typeof value !== rule.type)
@@ -153,6 +154,7 @@ const validateType = (prop, value, rule) => {
 }
 // Validate the length of string/array-like properties
 const validateLength = (prop, value, rule) => {
+    if (!rule) return
     if (!rule.minLength && !rule.maxLength) return
     // Must be string or array (object)
     if ((typeof value !== arrType) && (typeof value !== stringType))
@@ -166,6 +168,7 @@ const validateLength = (prop, value, rule) => {
 }
 // Validate the value of numerical properties
 const validateSize = (prop, value, rule) => {
+    if (!rule) return
     if (!rule.minValue && !rule.maxValue) return
     // Must be a number
     if (typeof value !== numberType)
@@ -179,6 +182,7 @@ const validateSize = (prop, value, rule) => {
 }
 // Validate the property against a set of allowed values, like an enum
 const validateValue = (prop, value, rule) => {
+    if (!rule) return
     if (!rule.values) return
     // Must be a string or a number
     if ((typeof value !== numberType) && (typeof value !== stringType))
@@ -210,6 +214,7 @@ const validateCondition = (prop, data, condition) => {
 }
 // Validate format via regex
 const validateFormat = (prop, value, rule) => {
+    if (!rule) return
     if (!rule.format) return
     if (typeof value !== stringType)
         throw new ValidationError(`${prop} format cannot be validated - not a string`)
@@ -233,6 +238,7 @@ const doComparison = (baseValue, comparison, targetValue) => {
 // DATA VALIDATORS
 // Validate a foreign key reference - referenced object must exist
 const validateForeignKey = async (prop, value, rule, dbService) => {
+    if (!rule) return
     if (!rule.reference) return
     // Need data service to check
     if (!dbService)
@@ -244,6 +250,7 @@ const validateForeignKey = async (prop, value, rule, dbService) => {
 }
 // Validate the uniqueness of a property value within the collection
 const validateUniqueness = async (prop, value, rule, dbService, collectionName) => {
+    if (!rule) return
     // Unique value
     if (!rule.unique) return
     // Need data service to check
