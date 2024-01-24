@@ -11,6 +11,9 @@ const boolRule = (required) => { return { type: boolType, required } }
 const fKeyRule = (reference, required, isNumber) => { return { type: isNumber ? numberType : stringType, reference, required } }
 const enumRule = (values, required, isNumber) => { return { type: isNumber ? numberType : stringType, values, required } }
 const numberRule = (minValue, maxValue, required) => { return { type: numberType, minValue, maxValue, required } }
+const colorRule = (required, unique) => {
+    return { ...stringRule(4, 7, required, unique), isColor: true }
+}
 
 // Custom Error Types
 // 2##
@@ -139,6 +142,7 @@ const validateProp = async (prop, data, rule, dbService, collectionName) => {
     validateSize(prop, value, rule)
     validateValue(prop, value, rule)
     validateFormat(prop, value, rule)
+    validateColor(prop, value, rule)
     // Rules that require checking against existing data
     await validateForeignKey(prop, value, rule, dbService)
     await validateUniqueness(prop, value, rule, dbService, collectionName)
@@ -221,6 +225,15 @@ const validateFormat = (prop, value, rule) => {
     if (!value.match(rule.format))
         throw new ValidationError(`${prop} value ${value} does not fit the required format`)
 }
+// Validate RGB color value, if this is a color
+const validateColor = (prop, value, rule) => {
+    if (!rule) return
+    if (!rule.isColor) return
+    // Validate value against regex
+    const regex = /^#(?:[0-9a-fA-F]{3}){1,2}$/
+    if (!regex.test(value))
+        throw new ValidationError(`Prop ${prop} is a(n) ${typeof value}, should be a(n) ${rule.type}`)
+}
 // Comparison helper
 const doComparison = (baseValue, comparison, targetValue) => {
     // Compare base value to target value
@@ -296,4 +309,5 @@ module.exports = {
     boolRule,
     enumRule,
     numberRule,
+    colorRule,
 }
