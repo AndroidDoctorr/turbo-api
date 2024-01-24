@@ -232,7 +232,7 @@ const validateColor = (prop, value, rule) => {
     // Validate value against regex
     const regex = /^#(?:[0-9a-fA-F]{3}){1,2}$/
     if (!regex.test(value))
-        throw new ValidationError(`Prop ${prop} is a(n) ${typeof value}, should be a(n) ${rule.type}`)
+        throw new ValidationError(`Prop ${prop} is not a valid color: ${value}`)
 }
 // Comparison helper
 const doComparison = (baseValue, comparison, targetValue) => {
