@@ -47,16 +47,16 @@ class ControllerBase {
         this.basicCRUD(options)
 
         if (!options.noMetaData) {
-            this.router.get('/my', (req, res) => handleRoute(req, res, async (req) =>
+            this.router.get('/my/', (req, res) => handleRoute(req, res, async (req) =>
                 await this.getMyDocuments(req.user)
             ))
 
-            this.router.get('/recent', (req, res) => handleRoute(req, res, async (req) =>
+            this.router.get('/recent/', (req, res) => handleRoute(req, res, async (req) =>
                 await this.getRecentDocuments(req.params.count, req.user, options.isPublicGet)
             ))
         }
 
-        this.router.get('/includeInactive', (req, res) => handleRoute(req, res, async (req) =>
+        this.router.get('/includeInactive/', (req, res) => handleRoute(req, res, async (req) =>
             await this.getAllDocuments(req.user)
         ))
 
