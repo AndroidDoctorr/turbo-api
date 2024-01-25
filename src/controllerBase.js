@@ -24,7 +24,7 @@ class ControllerBase {
             await this.createDocument(req.body, req.user)
         ))
 
-        this.router.get('/:id', (req, res) => handleRoute(req, res, async (req) =>
+        this.router.get('/id/:id', (req, res) => handleRoute(req, res, async (req) =>
             await this.getDocumentById(req.params.id, req.user, options.isPublicGet)
         ))
 
