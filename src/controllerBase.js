@@ -1,4 +1,4 @@
-const { AuthError, NotFoundError, applyDefaults, validateData, filterObjectByProps, ValidationError } = require('./validation')
+const { AuthError, applyDefaults, validateData, filterObjectByProps } = require('./validation')
 const { objectToString, getDiffString } = require('./string')
 const { getDataService, getLoggingService } = require('./serviceFactory')
 const { handleRoute } = require('./http')
@@ -24,7 +24,7 @@ class ControllerBase {
             await this.createDocument(req.body, req.user)
         ))
 
-        this.router.get('/id/:id', (req, res) => handleRoute(req, res, async (req) =>
+        this.router.get('/:id', (req, res) => handleRoute(req, res, async (req) =>
             await this.getDocumentById(req.params.id, req.user, options.isPublicGet)
         ))
 
@@ -46,26 +46,46 @@ class ControllerBase {
         this.options = options
         this.basicCRUD(options)
 
+        this.router.post('/', (req, res) => handleRoute(req, res, async (req) =>
+            await this.createDocument(req.body, req.user)
+        ))
+
+        this.router.get('/', (req, res) => handleRoute(req, res, async (req) =>
+            await this.getActiveDocuments(req.user, options.isPublicGet)
+        ))
+
         if (!options.noMetaData) {
-            this.router.get('/my/', (req, res) => handleRoute(req, res, async (req) =>
+            this.router.get('/my', (req, res) => handleRoute(req, res, async (req) =>
                 await this.getMyDocuments(req.user)
             ))
 
-            this.router.get('/recent/', (req, res) => handleRoute(req, res, async (req) =>
+            this.router.get('/recent', (req, res) => handleRoute(req, res, async (req) =>
                 await this.getRecentDocuments(req.params.count, req.user, options.isPublicGet)
             ))
         }
 
-        this.router.get('/includeInactive/', (req, res) => handleRoute(req, res, async (req) =>
+        this.router.get('/includeInactive', (req, res) => handleRoute(req, res, async (req) =>
             await this.getAllDocuments(req.user)
         ))
 
-        this.router.delete('/:id/archive', (req, res) => handleRoute(req, res, async (req) =>
+        this.router.get('/:id', (req, res) => handleRoute(req, res, async (req) =>
+            await this.getDocumentById(req.params.id, req.user, options.isPublicGet)
+        ))
+
+        this.router.put('/:id', (req, res) => handleRoute(req, res, async (req) =>
+            await this.updateDocument(req.params.id, req.body, req.user)
+        ))
+
+        this.router.put('/:id/archive', (req, res) => handleRoute(req, res, async (req) =>
             await this.archiveDocument(req.params.id, req.user)
         ))
 
         this.router.put('/:id/dearchive', (req, res) => handleRoute(req, res, async (req) =>
             await this.dearchiveDocument(req.params.id, req.user)
+        ))
+
+        this.router.delete('/:id', (req, res) => handleRoute(req, res, async (req) =>
+            await this.deleteDocument(req.params.id, req.user)
         ))
     }
 
