@@ -134,7 +134,6 @@ class ControllerBase {
     }
     // GET BY ID FULL
     getDocumentByIdFull = async (documentId, user, isPublic) => {
-        if (loops <= 0) return null
         // Get services
         const data = await this.getDocumentById(documentId, user, isPublic)
         if (!this.validationRules) return data
@@ -144,7 +143,8 @@ class ControllerBase {
         for (const prop in this.validationRules) {
             const { reference } = this.validationRules[prop]
             if (!reference) continue
-            const { key } = data
+            const key = data[prop]
+            if (!key) continue
             dataPromises.push(
                 db.getDocumentById(reference, key, !!user && !!user.admin)
                     .then(result => {
