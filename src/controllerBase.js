@@ -128,6 +128,30 @@ class ControllerBase {
         logger.info(`${this.collectionName}: ${documentId} retrieved by ${userId}`)
         return data
     }
+    // GET BY ID FULL
+    getDocumentByIdFull = async (documentId, user, isPublic) => {
+        if (loops <= 0) return null
+        // Get services
+        const data = await this.getDocumentById(documentId, user, isPublic)
+        if (!this.validationRules) return data
+        // Fetch objects linked by foreign keys
+        const db = await getDataService()
+        const dataPromises = []
+        for (const prop in this.validationRules) {
+            const { reference } = this.validationRules[prop]
+            if (!reference) continue
+            const { key } = data
+            dataPromises.push(
+                db.getDocumentById(reference, key, !!user && !!user.admin)
+                    .then(result => {
+                        data[prop] = result
+                    }))
+        }
+        await Promise.all(dataPromises)
+        const userId = !!user ? user.uid : 'anonymous'
+        logger.info(`${this.collectionName}: ${documentId} retrieved by ${userId}`)
+        return data
+    }
     // GET ACTIVE
     getActiveDocuments = async (user, isPublic) => {
         // Get services
