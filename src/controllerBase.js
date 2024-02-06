@@ -44,7 +44,6 @@ class ControllerBase {
     fullCRUD(options = {}) {
         // Get options, if any are defined, and pass to basicCRUD
         this.options = options
-        this.basicCRUD(options)
 
         this.router.post('/', (req, res) => handleRoute(req, res, async (req) =>
             await this.createDocument(req.body, req.user)
