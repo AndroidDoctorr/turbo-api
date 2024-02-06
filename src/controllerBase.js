@@ -71,6 +71,10 @@ class ControllerBase {
             await this.getDocumentById(req.params.id, req.user, options.isPublicGet)
         ))
 
+        this.router.get('/:id/full', (req, res) => handleRoute(req, res, async (req) =>
+            await this.getDocumentByIdFull(req.params.id, req.user, options.isPublicGet)
+        ))
+
         this.router.put('/:id', (req, res) => handleRoute(req, res, async (req) =>
             await this.updateDocument(req.params.id, req.body, req.user)
         ))
@@ -125,6 +129,30 @@ class ControllerBase {
         // Get document(s)
         const userId = !!user ? user.uid : 'anonymous'
         const data = await db.getDocumentById(this.collectionName, documentId, !!user && !!user.admin)
+        logger.info(`${this.collectionName}: ${documentId} retrieved by ${userId}`)
+        return data
+    }
+    // GET BY ID FULL
+    getDocumentByIdFull = async (documentId, user, isPublic) => {
+        // Get services
+        const data = await this.getDocumentById(documentId, user, isPublic)
+        if (!this.validationRules) return data
+        // Fetch objects linked by foreign keys
+        const db = await getDataService()
+        const dataPromises = []
+        for (const prop in this.validationRules) {
+            const { reference } = this.validationRules[prop]
+            if (!reference) continue
+            const key = data[prop]
+            if (!key) continue
+            dataPromises.push(
+                db.getDocumentById(reference, key, !!user && !!user.admin)
+                    .then(result => {
+                        data[prop] = result
+                    }))
+        }
+        await Promise.all(dataPromises)
+        const userId = !!user ? user.uid : 'anonymous'
         logger.info(`${this.collectionName}: ${documentId} retrieved by ${userId}`)
         return data
     }
