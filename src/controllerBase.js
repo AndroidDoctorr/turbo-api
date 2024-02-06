@@ -71,6 +71,10 @@ class ControllerBase {
             await this.getDocumentById(req.params.id, req.user, options.isPublicGet)
         ))
 
+        this.router.get('/:id/full', (req, res) => handleRoute(req, res, async (req) =>
+            await this.getDocumentByIdFull(req.params.id, req.user, options.isPublicGet)
+        ))
+
         this.router.put('/:id', (req, res) => handleRoute(req, res, async (req) =>
             await this.updateDocument(req.params.id, req.body, req.user)
         ))
