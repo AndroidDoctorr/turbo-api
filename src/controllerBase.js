@@ -311,6 +311,7 @@ class ControllerBase {
         const db = await getDataService()
         const logger = await getLoggingService()
         // User must be creator or admin
+        const oldData = await db.getDocumentById(this.collectionName, documentId)
         if (!user && !(user.admin || user.uid === oldData.createdBy))
             throw new AuthError('User is not authenticated')
         if (!this.isUserAdmin(user))
@@ -332,6 +333,7 @@ class ControllerBase {
         const db = await getDataService()
         const logger = await getLoggingService()
         // User must be creator or admin
+        const data = await db.getDocumentById(this.collectionName, documentId)
         if (!user || !(user.admin || user.uid === data.createdBy))
             throw new AuthError('User is not authenticated')
         // Archive document
@@ -347,7 +349,7 @@ class ControllerBase {
         const db = await getDataService()
         const logger = await getLoggingService()
         // ADMIN ONLY
-        if (this.isUserAdmin(user)) throw new AuthError('User is not authenticated')
+        if (!this.isUserAdmin(user) && !this.options.noMetaData) throw new AuthError('User is not authenticated')
         // De-archive document
         const userId = !!user ? user.uid : 'anonymous'
         await db.dearchiveDocument(this.collectionName, documentId, userId, this.options.noMetaData)
@@ -361,7 +363,11 @@ class ControllerBase {
         const db = await getDataService()
         const logger = await getLoggingService()
         // Validate authentication
-        if (!user || !this.isUserAdmin(user) || (!!this.options.allowUserDelete && !user))
+        const data = await db.getDocumentById(this.collectionName, documentId)
+        if (!user)
+            throw new AuthError('User is not authenticated')
+        const userDeleteAllowed = this.options.allowUserDelete && user.uid === data.createdBy
+        if (!userDeleteAllowed || !this.isUserAdmin(user))
             throw new AuthError('User is not authenticated')
         // Delete document
         const userId = user.uid
