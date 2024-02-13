@@ -367,7 +367,7 @@ class ControllerBase {
         if (!user)
             throw new AuthError('User is not authenticated')
         const userDeleteAllowed = this.options.allowUserDelete && user.uid === data.createdBy
-        if (!userDeleteAllowed || !this.isUserAdmin(user))
+        if (!userDeleteAllowed && !this.isUserAdmin(user))
             throw new AuthError('User is not authenticated')
         // Delete document
         const userId = user.uid
