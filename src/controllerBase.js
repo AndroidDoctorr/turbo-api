@@ -153,6 +153,7 @@ class ControllerBase {
         }
         await Promise.all(dataPromises)
         const userId = !!user ? user.uid : 'anonymous'
+        const logger = await getLoggingService()
         logger.info(`${this.collectionName}: ${documentId} retrieved by ${userId}`)
         return data
     }
