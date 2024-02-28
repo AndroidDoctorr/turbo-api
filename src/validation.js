@@ -119,9 +119,9 @@ const validateData = async (data, rules, dbService, collectionName) => {
     for (const prop in rules) {
         const rule = rules[prop]
         if (prop === 'uniquePropCombination')
-            await validateUniquePropCombo(data, rule, dbService, collectionName)
+            return await validateUniquePropCombo(data, rule, dbService, collectionName)
         else
-            await validateProp(prop, data, rule, dbService, collectionName)
+            return await validateProp(prop, data, rule, dbService, collectionName)
     }
 }
 // HELPER FUNCTIONS
