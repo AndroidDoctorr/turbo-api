@@ -313,9 +313,10 @@ class ControllerBase {
         const logger = await getLoggingService()
         // User must be creator or admin
         const oldData = await db.getDocumentById(this.collectionName, documentId)
-        if (!user && !(user.admin || user.uid === oldData.createdBy))
-            throw new AuthError('User is not authenticated')
-        if (!this.isUserAdmin(user))
+        const isAdmin = !!user.admin
+        const isOwner = user.uid === oldData.createdBy
+        const isAdminOrOwner = isAdmin || isOwner
+        if (!user || !isAdminOrOwner)
             throw new AuthError('User is not authenticated')
         // Sanitize data
         const filteredData = filterObjectByProps(data, this.propNames)
