@@ -108,7 +108,7 @@ class ControllerBase {
         const userId = !!user ? user.uid : 'anonymous'
         const filteredData = filterObjectByProps(data, this.propNames)
         const defaultedData = applyDefaults(filteredData, this.validationRules)
-        validateData(defaultedData, this.validationRules, db, this.collectionName)
+        await validateData(defaultedData, this.validationRules, db, this.collectionName)
         // Create document
         const newData = await db.createDocument(this.collectionName, defaultedData, userId, this.options.noMetaData)
         // Log and return if successful
