@@ -1,4 +1,4 @@
-const { AuthError, applyDefaults, validateData, filterObjectByProps } = require('./validation')
+const { AuthError, applyDefaults, validateData, filterObjectByProps, NotFoundError } = require('./validation')
 const { objectToString, getDiffString } = require('./string')
 const { getDataService, getLoggingService } = require('./serviceFactory')
 const { handleRoute } = require('./http')
@@ -108,7 +108,7 @@ class ControllerBase {
         const userId = !!user ? user.uid : 'anonymous'
         const filteredData = filterObjectByProps(data, this.propNames)
         const defaultedData = applyDefaults(filteredData, this.validationRules)
-        validateData(defaultedData, this.validationRules, db, this.collectionName)
+        await validateData(defaultedData, this.validationRules, db, this.collectionName)
         // Create document
         const newData = await db.createDocument(this.collectionName, defaultedData, userId, this.options.noMetaData)
         // Log and return if successful
@@ -320,7 +320,7 @@ class ControllerBase {
             throw new AuthError('User is not authenticated')
         // Sanitize data
         const filteredData = filterObjectByProps(data, this.propNames)
-        validateData(filteredData, this.validationRules, db, this.collectionName)
+        await validateData(filteredData, this.validationRules, db, this.collectionName)
         // Update document
         const userId = !!user ? user.uid : 'anonymous'
         const newData = await db.updateDocument(this.collectionName, documentId, filteredData, userId, this.options.noMetaData)
@@ -336,6 +336,8 @@ class ControllerBase {
         const logger = await getLoggingService()
         // User must be creator or admin
         const data = await db.getDocumentById(this.collectionName, documentId)
+        if (!data)
+            throw new NotFoundError(`Cannot find ${this.collectionName} document to delete: ${documentId}`)
         if (!user || !(user.admin || user.uid === data.createdBy))
             throw new AuthError('User is not authenticated')
         // Archive document
@@ -366,6 +368,8 @@ class ControllerBase {
         const logger = await getLoggingService()
         // Validate authentication
         const data = await db.getDocumentById(this.collectionName, documentId)
+        if (!data)
+            throw new NotFoundError(`Cannot find ${this.collectionName} document to delete: ${documentId}`)
         if (!user)
             throw new AuthError('User is not authenticated')
         const userDeleteAllowed = this.options.allowUserDelete && user.uid === data.createdBy
