@@ -320,7 +320,7 @@ class ControllerBase {
             throw new AuthError('User is not authenticated')
         // Sanitize data
         const filteredData = filterObjectByProps(data, this.propNames)
-        validateData(filteredData, this.validationRules, db, this.collectionName)
+        await validateData(filteredData, this.validationRules, db, this.collectionName)
         // Update document
         const userId = !!user ? user.uid : 'anonymous'
         const newData = await db.updateDocument(this.collectionName, documentId, filteredData, userId, this.options.noMetaData)
