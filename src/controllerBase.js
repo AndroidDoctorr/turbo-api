@@ -108,13 +108,18 @@ class ControllerBase {
         const userId = !!user ? user.uid : 'anonymous'
         const filteredData = filterObjectByProps(data, this.propNames)
         const defaultedData = applyDefaults(filteredData, this.validationRules)
-        await validateData(defaultedData, this.validationRules, db, this.collectionName)
-        // Create document
-        const newData = await db.createDocument(this.collectionName, defaultedData, userId, this.options.noMetaData)
-        // Log and return if successful
-        logger.info(`New item added to ${this.collectionName} with ID ${newData.id}:\n` +
-            `${objectToString(defaultedData)} by ${userId}`)
-        return newData
+        try {
+            await validateData(defaultedData, this.validationRules, db, this.collectionName)
+            // Create document
+            const newData = await db.createDocument(this.collectionName, defaultedData, userId, this.options.noMetaData)
+            // Log and return if successful
+            logger.info(`New item added to ${this.collectionName} with ID ${newData.id}:\n` +
+                `${objectToString(defaultedData)} by ${userId}`)
+            return newData
+        } catch (error) {
+            logger.error(`User ${userId} failed to create document in ${this.collectionName}:\n${error}\nData: ${objectToString(defaultedData)}`)
+            throw error
+        }
     }
     // GET BY ID
     getDocumentById = async (documentId, user, isPublic) => {
@@ -320,14 +325,19 @@ class ControllerBase {
             throw new AuthError('User is not authenticated')
         // Sanitize data
         const filteredData = filterObjectByProps(data, this.propNames)
-        await validateData(filteredData, this.validationRules, db, this.collectionName)
-        // Update document
         const userId = !!user ? user.uid : 'anonymous'
-        const newData = await db.updateDocument(this.collectionName, documentId, filteredData, userId, this.options.noMetaData)
-        // Log and return if successful
-        logger.info(`${this.collectionName}: ${documentId} updated by user ${userId}:` +
-            `${getDiffString(oldData, newData)}`)
-        return { id: documentId, ...newData }
+        try {
+            await validateData(defaultedData, this.validationRules, db, this.collectionName)
+            // Update document
+            const newData = await db.updateDocument(this.collectionName, documentId, filteredData, userId, this.options.noMetaData)
+            // Log and return if successful
+            logger.info(`${this.collectionName}: ${documentId} updated by user ${userId}:` +
+                `${getDiffString(oldData, newData)}`)
+            return { id: documentId, ...newData }
+        } catch (error) {
+            logger.error(`User ${userId} failed to update document in ${this.collectionName}:\n${error}\nData: ${objectToString(newData)}`)
+            throw error
+        }
     }
     // ARCHIVE
     archiveDocument = async (documentId, user) => {
@@ -342,10 +352,16 @@ class ControllerBase {
             throw new AuthError('User is not authenticated')
         // Archive document
         const userId = !!user ? user.uid : 'anonymous'
-        await db.archiveDocument(this.collectionName, documentId, userId, this.options.noMetaData)
-        // Log and return if successful
-        logger.info(`${this.collectionName}: ${documentId} archived by user ${userId}`)
-        return { id: documentId }
+        try {
+            await db.archiveDocument(this.collectionName, documentId, userId, this.options.noMetaData)
+            // Log and return if successful
+            logger.info(`${this.collectionName}: ${documentId} archived by user ${userId}`)
+            return { id: documentId }
+        } catch (error) {
+            logger.error(`User ${userId} failed to archive document in ${this.collectionName}:\n${error}`)
+            throw error
+        }
+
     }
     // DE-ARCHIVE
     dearchiveDocument = async (documentId, user) => {
@@ -356,10 +372,15 @@ class ControllerBase {
         if (!this.isUserAdmin(user) && !this.options.noMetaData) throw new AuthError('User is not authenticated')
         // De-archive document
         const userId = !!user ? user.uid : 'anonymous'
-        await db.dearchiveDocument(this.collectionName, documentId, userId, this.options.noMetaData)
-        // Log and return if successful
-        logger.warn(`${this.collectionName}: ${documentId} - DE-ARCHIVED by user ${userId}`)
-        return { id: documentId }
+        try {
+            await db.dearchiveDocument(this.collectionName, documentId, userId, this.options.noMetaData)
+            // Log and return if successful
+            logger.warn(`${this.collectionName}: ${documentId} - DE-ARCHIVED by user ${userId}`)
+            return { id: documentId }
+        } catch (error) {
+            logger.error(`User ${userId} failed to dearchive document in ${this.collectionName}:\n${error}`)
+            throw error
+        }
     }
     // DELETE
     deleteDocument = async (documentId, user) => {
@@ -377,10 +398,15 @@ class ControllerBase {
             throw new AuthError('User is not authenticated')
         // Delete document
         const userId = user.uid
-        await db.deleteDocument(this.collectionName, documentId)
-        // Log and return if successful
-        logger.warn(`${this.collectionName}: ${documentId} - DELETED by user ${userId}`)
-        return { id: documentId }
+        try {
+            await db.deleteDocument(this.collectionName, documentId)
+            // Log and return if successful
+            logger.warn(`${this.collectionName}: ${documentId} - DELETED by user ${userId}`)
+            return { id: documentId }
+        } catch (error) {
+            logger.error(`User ${userId} failed to delete document in ${this.collectionName}:\n${error}`)
+            throw error
+        }
     }
 
     isUserAdmin = (user) => !!user && !!user.admin
