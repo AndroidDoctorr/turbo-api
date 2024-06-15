@@ -1,8 +1,9 @@
 const admin = require('firebase-admin')
 
-const createAuthenticationMiddleware = (dataService) => {
+const createAuthenticationMiddleware = (logger, dataService) => {
     return async (req, res, next) => {
         const authorizationHeader = req.headers.authorization
+        if (logger) logger.log('Authorization header:', authorizationHeader)
         const handleInvalidHeader = () => {
             return res.status(400).json({ error: 'Invalid Authorization Header' })
         }

@@ -10,7 +10,7 @@ module.exports.buildApp = async () => {
     const config = await getConfig()
 
     // Load service middleware
-    const { registerService, getAuthService, getDataService } = require('./serviceFactory')
+    const { registerService, getAuthService, getDataService, getLoggingService } = require('./serviceFactory')
     const { createAuthenticationMiddleware } = require('./authServices/firebaseAuthService')
 
     // Register Firebase as the default service
@@ -19,10 +19,13 @@ module.exports.buildApp = async () => {
     registerService('firestore', FirebaseService, FirestoreLoggerService, createAuthenticationMiddleware)
 
     // Load the auth service from the config
-    const authMiddleware = await getAuthService()
-    const dataService = await getDataService()
+    const { authMiddleware, dataService, logger } = await Promise.all([
+        getAuthService(),
+        getDataService(),
+        getLoggingService()
+    ])
     // Add service-specific middleware for authorization
-    app.use(authMiddleware(dataService))
+    app.use(authMiddleware(logger, dataService))
 
     // Load and use controllers dynamically
     const controllersPath = path.join(process.cwd(), 'controllers')
