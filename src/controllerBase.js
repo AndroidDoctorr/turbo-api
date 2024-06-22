@@ -335,7 +335,7 @@ class ControllerBase {
                 `${getDiffString(oldData, newData)}`)
             return { id: documentId, ...newData }
         } catch (error) {
-            logger.error(`User ${userId} failed to update document in ${this.collectionName}:\n${error}\nData: ${objectToString(newData)}`)
+            logger.error(`User ${userId} failed to update document in ${this.collectionName}:\n${error}\nData: ${objectToString(data)}`)
             throw error
         }
     }
