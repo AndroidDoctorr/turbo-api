@@ -325,6 +325,7 @@ class ControllerBase {
             throw new AuthError('User is not authenticated')
         // Sanitize data
         const filteredData = filterObjectByProps(data, this.propNames)
+        const defaultedData = applyDefaults(filteredData, this.validationRules)
         const userId = !!user ? user.uid : 'anonymous'
         try {
             await validateData(defaultedData, this.validationRules, db, this.collectionName)
