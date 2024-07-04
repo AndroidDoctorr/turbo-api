@@ -32,8 +32,12 @@ class ControllerBase {
             await this.getActiveDocuments(req.user, options.isPublicGet)
         ))
 
-        this.router.put('/:id', (req, res) => handleRoute(req, res, async (req) =>
+        this.router.patch('/:id', (req, res) => handleRoute(req, res, async (req) =>
             await this.updateDocument(req.params.id, req.body, req.user)
+        ))
+
+        this.router.patch('/', (req, res) => handleRoute(req, res, async (req) =>
+            await this.updateDocuments(req.body, req.user)
         ))
 
         this.router.delete('/:id', (req, res) => handleRoute(req, res, async (req) =>
@@ -75,15 +79,19 @@ class ControllerBase {
             await this.getDocumentByIdFull(req.params.id, req.user, options.isPublicGet)
         ))
 
-        this.router.put('/:id', (req, res) => handleRoute(req, res, async (req) =>
+        this.router.patch('/:id', (req, res) => handleRoute(req, res, async (req) =>
             await this.updateDocument(req.params.id, req.body, req.user)
         ))
 
-        this.router.put('/:id/archive', (req, res) => handleRoute(req, res, async (req) =>
+        this.router.patch('/', (req, res) => handleRoute(req, res, async (req) =>
+            await this.updateDocuments(req.body, req.user)
+        ))
+
+        this.router.patch('/:id/archive', (req, res) => handleRoute(req, res, async (req) =>
             await this.archiveDocument(req.params.id, req.user)
         ))
 
-        this.router.put('/:id/dearchive', (req, res) => handleRoute(req, res, async (req) =>
+        this.router.patch('/:id/dearchive', (req, res) => handleRoute(req, res, async (req) =>
             await this.dearchiveDocument(req.params.id, req.user)
         ))
 
@@ -128,9 +136,9 @@ class ControllerBase {
         const logger = await getLoggingService()
         // Validate authentication
         if (!!this.options.isAdminOnly && !this.isUserAdmin(user))
-            throw new AuthError('User is not authenticated')
+            throw new AuthError(`Cannot get ${documentId} - User is not authenticated`)
         if (!user && !isPublic)
-            throw new AuthError('You must be logged in to see this')
+            throw new AuthError(`Cannot get ${documentId} - You must be logged in to see this`)
         // Get document(s)
         const userId = !!user ? user.uid : 'anonymous'
         const data = await db.getDocumentById(this.collectionName, documentId, !!user && !!user.admin)
@@ -140,7 +148,12 @@ class ControllerBase {
     // GET BY ID FULL
     getDocumentByIdFull = async (documentId, user, isPublic) => {
         // Get services
-        const data = await this.getDocumentById(documentId, user, isPublic)
+        let data
+        try {
+            data = await this.getDocumentById(documentId, user, isPublic)
+        } catch (error) {
+            throw new NotFoundError(`Cannot find ${this.collectionName}: ${documentId}`)
+        }
         if (!this.validationRules) return data
         // Fetch objects linked by foreign keys
         const db = await getDataService()
@@ -340,6 +353,27 @@ class ControllerBase {
             throw error
         }
     }
+    updateDocuments = async (documents, user) => {
+        // Get services
+        const db = await getDataService()
+        const logger = await getLoggingService()
+        // Validate authentication
+        if (!user)
+            throw new AuthError('User is not authenticated')
+        // Update documents
+        const userId = user.uid
+        const promises = documents.map(async (document) => {
+            const isAdmin = !!user.admin
+            const isOwner = userId === document.createdBy
+            const isAdminOrOwner = isAdmin || isOwner
+            if (!isAdminOrOwner) {
+                throw new AuthError(`User is not authorized to update document with ID ${document.id}`)
+            }
+            return db.updateDocument(this.collectionName, document.id, document, userId)
+        })
+        logger.info(`${documents.length} documents in ${this.collectionName} updated by user ${userId}`)
+        return await Promise.all(promises)
+    }
     // ARCHIVE
     archiveDocument = async (documentId, user) => {
         // Get services
@@ -349,8 +383,11 @@ class ControllerBase {
         const data = await db.getDocumentById(this.collectionName, documentId)
         if (!data)
             throw new NotFoundError(`Cannot find ${this.collectionName} document to delete: ${documentId}`)
-        if (!user || !(user.admin || user.uid === data.createdBy))
-            throw new AuthError('User is not authenticated')
+        const isAdmin = !!user.admin
+        const isOwner = user.uid === data.createdBy
+        const isAdminOrOwner = isAdmin || isOwner
+        if (!user || !isAdminOrOwner)
+            throw new AuthError(`Cannot archive ${documentId} - user is not authenticated`)
         // Archive document
         const userId = !!user ? user.uid : 'anonymous'
         try {
