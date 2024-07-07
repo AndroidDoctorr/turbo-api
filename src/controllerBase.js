@@ -28,9 +28,11 @@ class ControllerBase {
             await this.getDocumentById(req.params.id, req.user, options.isPublicGet)
         ))
 
-        this.router.get('/', (req, res) => handleRoute(req, res, async (req) =>
-            await this.getActiveDocuments(req.user, options.isPublicGet)
-        ))
+        this.router.get('/', (req, res) => handleRoute(req, res, async (req) => {
+            const db = await getDataService()
+            const { page = 0, limit = db.defaultLimit } = req.query
+            return await this.getActiveDocuments(req.user, parseInt(limit), parseInt(page), options.isPublicGet)
+        }))
 
         this.router.patch('/:id', (req, res) => handleRoute(req, res, async (req) =>
             await this.updateDocument(req.params.id, req.body, req.user)
@@ -53,23 +55,31 @@ class ControllerBase {
             await this.createDocument(req.body, req.user)
         ))
 
-        this.router.get('/', (req, res) => handleRoute(req, res, async (req) =>
-            await this.getActiveDocuments(req.user, options.isPublicGet)
-        ))
+        this.router.get('/', (req, res) => handleRoute(req, res, async (req) => {
+            const db = await getDataService()
+            const { page = 0, limit = db.defaultLimit } = req.query
+            return await this.getActiveDocuments(req.user, parseInt(limit), parseInt(page), options.isPublicGet)
+        }))
 
         if (!options.noMetaData) {
-            this.router.get('/my', (req, res) => handleRoute(req, res, async (req) =>
-                await this.getMyDocuments(req.user)
-            ))
+            this.router.get('/my', (req, res) => handleRoute(req, res, async (req) => {
+                const db = await getDataService()
+                const { page = 0, limit = db.defaultLimit } = req.query
+                return await this.getMyDocuments(req.user, parseInt(limit), parseInt(page))
+            }))
 
-            this.router.get('/recent', (req, res) => handleRoute(req, res, async (req) =>
-                await this.getRecentDocuments(req.params.count, req.user, options.isPublicGet)
-            ))
+            this.router.get('/recent', (req, res) => handleRoute(req, res, async (req) => {
+                const db = await getDataService()
+                const { page = 0, limit = db.defaultLimit } = req.query
+                return await this.getRecentDocuments(req.params.count, req.user, parseInt(limit), parseInt(page), options.isPublicGet)
+            }))
         }
 
-        this.router.get('/includeInactive', (req, res) => handleRoute(req, res, async (req) =>
-            await this.getAllDocuments(req.user)
-        ))
+        this.router.get('/includeInactive', (req, res) => handleRoute(req, res, async (req) => {
+            const db = await getDataService()
+            const { page = 0, limit = db.defaultLimit } = req.query
+            return await this.getAllDocuments(req.user, parseInt(limit), parseInt(page))
+        }))
 
         this.router.get('/:id', (req, res) => handleRoute(req, res, async (req) =>
             await this.getDocumentById(req.params.id, req.user, options.isPublicGet)
@@ -176,7 +186,7 @@ class ControllerBase {
         return data
     }
     // GET ACTIVE
-    getActiveDocuments = async (user, isPublic) => {
+    getActiveDocuments = async (user, limit, startAtIndex, isPublic) => {
         // Get services
         const db = await getDataService()
         const logger = await getLoggingService()
@@ -187,13 +197,13 @@ class ControllerBase {
             throw new AuthError('You must be logged in to see this')
         // Get document(s)
         const userId = !!user ? user.uid : 'anonymous'
-        const documents = await db.getActiveDocuments(this.collectionName)
+        const documents = await db.getActiveDocuments(this.collectionName, limit, startAtIndex)
         // Log and return if successful
         logger.info(`Active ${this.collectionName} retrieved by ${userId}`)
         return documents
     }
     // GET ALL
-    getAllDocuments = async (user) => {
+    getAllDocuments = async (user, limit, startAtIndex) => {
         // Get services
         const db = await getDataService()
         const logger = await getLoggingService()
@@ -202,13 +212,13 @@ class ControllerBase {
             throw new AuthError('User is not authenticated')
         // Get document(s)
         const userId = !!user ? user.uid : 'anonymous'
-        const documents = await db.getAllDocuments(this.collectionName)
+        const documents = await db.getAllDocuments(this.collectionName, limit, startAtIndex)
         // Log and return if successful
         logger.info(`All ${this.collectionName} retrieved by user ${userId}`)
         return documents
     }
     // GET BY PROP
-    getDocumentsByProp = async (prop, value, user, isPublic) => {
+    getDocumentsByProp = async (prop, value, user, limit, startAtIndex, isPublic) => {
         // Get services
         const db = await getDataService()
         const logger = await getLoggingService()
@@ -219,13 +229,13 @@ class ControllerBase {
             throw new AuthError('You must be logged in to see this')
         // Get document(s)
         const userId = !!user ? user.uid : 'anonymous'
-        const documents = await db.getDocumentsByProp(this.collectionName, prop, value)
+        const documents = await db.getDocumentsByProp(this.collectionName, prop, value, limit, startAtIndex)
         // Log and return if successful
         logger.info(`${this.collectionName} where ${prop} = ${value} retrieved by ${userId}`)
         return documents
     }
     // GET BY PROPS
-    getDocumentsByProps = async (props, user, isPublic) => {
+    getDocumentsByProps = async (props, user, limit, startAtIndex, isPublic) => {
         // Get services
         const db = await getDataService()
         const logger = await getLoggingService()
@@ -236,13 +246,13 @@ class ControllerBase {
             throw new AuthError('You must be logged in to see this')
         // Get document(s)
         const userId = !!user ? user.uid : 'anonymous'
-        const documents = await db.getDocumentsByProps(this.collectionName, props)
+        const documents = await db.getDocumentsByProps(this.collectionName, props, limit, startAtIndex)
         // Log and return if successful
         logger.info(`${this.collectionName} where ${objectToString(props)}\n retrieved by ${userId}`)
         return documents
     }
     // QUERY DOCUMENTS BY PROP
-    queryDocumentsByProp = async (prop, value, user, isPublic) => {
+    queryDocumentsByProp = async (prop, value, user, limit, startAtIndex, isPublic) => {
         // Get services
         const db = await getDataService()
         const logger = await getLoggingService()
@@ -253,13 +263,13 @@ class ControllerBase {
             throw new AuthError('You must be logged in to see this')
         // Get document(s)
         const userId = !!user ? user.uid : 'anonymous'
-        const documents = await db.queryDocumentsByProp(this.collectionName, prop, value)
+        const documents = await db.queryDocumentsByProp(this.collectionName, prop, value, limit, startAtIndex)
         // Log and return if successful
         logger.info(`${this.collectionName} where ${prop} starts with ${value} retrieved by ${userId}`)
         return documents
     }
     // GET DOCUMENTS WHERE IN PROP
-    getDocumentsWhereInProp = async (prop, values, user, isPublic) => {
+    getDocumentsWhereInProp = async (prop, values, user, limit, startAtIndex, isPublic) => {
         // Get services
         const db = await getDataService()
         const logger = await getLoggingService()
@@ -270,13 +280,13 @@ class ControllerBase {
             throw new AuthError('You must be logged in to see this')
         // Get document(s)
         const userId = !!user ? user.uid : 'anonymous'
-        const documents = await db.getDocumentsWhereInProp(this.collectionName, prop, values)
+        const documents = await db.getDocumentsWhereInProp(this.collectionName, prop, values, limit, startAtIndex)
         // Log and return if successful
         logger.info(`${this.collectionName} where ${prop} in ${values.join(', ')} retrieved by ${userId}`)
         return documents
     }
     // GET RECENT
-    getRecentDocuments = async (count, user, isPublic) => {
+    getRecentDocuments = async (count, user, limit, startAtIndex, isPublic) => {
         // Get services
         const db = await getDataService()
         const logger = await getLoggingService()
@@ -287,13 +297,13 @@ class ControllerBase {
             throw new AuthError('You must be logged in to see this')
         // Get document(s)
         const userId = !!user ? user.uid : 'anonymous'
-        const documents = await db.getRecentDocuments(this.collectionName, count)
+        const documents = await db.getRecentDocuments(this.collectionName, count, limit, startAtIndex)
         // Log and return if successful
         logger.info(`Recent ${this.collectionName} retrieved by user ${userId}`)
         return documents
     }
     // GET MY
-    getMyDocuments = async (user) => {
+    getMyDocuments = async (user, limit, startAtIndex) => {
         // Get services
         const db = await getDataService()
         const logger = await getLoggingService()
@@ -304,13 +314,13 @@ class ControllerBase {
             throw new AuthError('User is not authenticated')
         // Get document(s)
         const userId = !!user ? user.uid : 'anonymous'
-        const documents = await db.getMyDocuments(this.collectionName, userId)
+        const documents = await db.getMyDocuments(this.collectionName, userId, limit, startAtIndex)
         // Log and return if successful
         logger.info(`Own ${this.collectionName} retrieved by user ${userId}`)
         return documents
     }
     // GET USER
-    getUserDocuments = async (user, ownerId) => {
+    getUserDocuments = async (user, ownerId, limit, startAtIndex) => {
         // Get services
         const db = await getDataService()
         const logger = await getLoggingService()
@@ -319,7 +329,7 @@ class ControllerBase {
             throw new AuthError('User is not authenticated')
         // Get document(s)
         const userId = !!user ? user.uid : 'anonymous'
-        const documents = await db.getUserDocuments(this.collectionName, ownerId)
+        const documents = await db.getUserDocuments(this.collectionName, ownerId, limit, startAtIndex)
         // Log and return if successful
         logger.info(`${this.collectionName} owned by user ${userId} retrieved by user ${userId}`)
         return documents
