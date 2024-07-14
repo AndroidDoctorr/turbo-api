@@ -49,8 +49,13 @@ class FirebaseService {
         const queryLimit = isNaN(limit) ? this.defaultLimit : limit
         const startAt = isNaN(startAtIndex) ? 0 : startAtIndex * queryLimit
         let docRef = this.db.collection(collectionName)
-        for (const prop in props)
-            docRef = docRef.where(prop, '==', props[prop])
+        for (const prop in props) {
+            if (props[prop] === undefined) {
+                docRef = docRef.where(prop, '==', null)
+            } else {
+                docRef = docRef.where(prop, '==', props[prop])
+            }
+        }
         if (!includeInactive)
             docRef = docRef.where('isActive', '==', true)
         if (orderBy) docRef = docRef.orderBy(orderBy)
