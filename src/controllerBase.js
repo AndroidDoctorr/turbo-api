@@ -114,8 +114,10 @@ class ControllerBase {
     // CREATE
     createDocument = async (data, user) => {
         // Get services
-        const db = await getDataService()
-        const logger = await getLoggingService()
+        const [db, logger] = await Promise.all([
+            getDataService(),
+            getLoggingService()
+        ])
         // Validate authentication
         if (!!this.options.isAdminOnly && !this.isUserAdmin(user))
             throw new AuthError('User is not authenticated')
@@ -142,8 +144,10 @@ class ControllerBase {
     // GET BY ID
     getDocumentById = async (documentId, user, isPublic) => {
         // Get services
-        const db = await getDataService()
-        const logger = await getLoggingService()
+        const [db, logger] = await Promise.all([
+            getDataService(),
+            getLoggingService()
+        ])
         // Validate authentication
         if (!!this.options.isAdminOnly && !this.isUserAdmin(user))
             throw new AuthError(`Cannot get ${documentId} - User is not authenticated`)
@@ -166,7 +170,10 @@ class ControllerBase {
         }
         if (!this.validationRules) return data
         // Fetch objects linked by foreign keys
-        const db = await getDataService()
+        const [db, logger] = await Promise.all([
+            getDataService(),
+            getLoggingService()
+        ])
         const dataPromises = []
         for (const prop in this.validationRules) {
             const { reference } = this.validationRules[prop]
@@ -181,15 +188,16 @@ class ControllerBase {
         }
         await Promise.all(dataPromises)
         const userId = !!user ? user.uid : 'anonymous'
-        const logger = await getLoggingService()
         logger.info(`${this.collectionName}: ${documentId} retrieved by ${userId}`)
         return data
     }
     // GET ACTIVE
     getActiveDocuments = async (user, limit, startAtIndex, isPublic) => {
         // Get services
-        const db = await getDataService()
-        const logger = await getLoggingService()
+        const [db, logger] = await Promise.all([
+            getDataService(),
+            getLoggingService()
+        ])
         // Validate authentication
         if (!!this.options.isAdminOnly && !this.isUserAdmin(user))
             throw new AuthError('User is not authenticated')
@@ -205,8 +213,10 @@ class ControllerBase {
     // GET ALL
     getAllDocuments = async (user, limit, startAtIndex) => {
         // Get services
-        const db = await getDataService()
-        const logger = await getLoggingService()
+        const [db, logger] = await Promise.all([
+            getDataService(),
+            getLoggingService()
+        ])
         // Validate authentication
         if (!this.isUserAdmin(user))
             throw new AuthError('User is not authenticated')
@@ -220,8 +230,10 @@ class ControllerBase {
     // GET BY PROP
     getDocumentsByProp = async (prop, value, user, limit, startAtIndex, isPublic) => {
         // Get services
-        const db = await getDataService()
-        const logger = await getLoggingService()
+        const [db, logger] = await Promise.all([
+            getDataService(),
+            getLoggingService()
+        ])
         // Validate authentication
         if (!!this.options.isAdminOnly && !this.isUserAdmin(user))
             throw new AuthError('User is not authenticated')
@@ -237,8 +249,10 @@ class ControllerBase {
     // GET BY PROPS
     getDocumentsByProps = async (props, user, limit, startAtIndex, isPublic) => {
         // Get services
-        const db = await getDataService()
-        const logger = await getLoggingService()
+        const [db, logger] = await Promise.all([
+            getDataService(),
+            getLoggingService()
+        ])
         // Validate authentication
         if (!!this.options.isAdminOnly && !this.isUserAdmin(user))
             throw new AuthError('User is not authenticated')
@@ -254,8 +268,10 @@ class ControllerBase {
     // QUERY DOCUMENTS BY PROP
     queryDocumentsByProp = async (prop, value, user, limit, startAtIndex, isPublic) => {
         // Get services
-        const db = await getDataService()
-        const logger = await getLoggingService()
+        const [db, logger] = await Promise.all([
+            getDataService(),
+            getLoggingService()
+        ])
         // Validate authentication
         if (!!this.options.isAdminOnly && !this.isUserAdmin(user))
             throw new AuthError('User is not authenticated')
@@ -271,8 +287,10 @@ class ControllerBase {
     // GET DOCUMENTS WHERE IN PROP
     getDocumentsWhereInProp = async (prop, values, user, limit, startAtIndex, isPublic) => {
         // Get services
-        const db = await getDataService()
-        const logger = await getLoggingService()
+        const [db, logger] = await Promise.all([
+            getDataService(),
+            getLoggingService()
+        ])
         // Validate authentication
         if (!!this.options.isAdminOnly && !this.isUserAdmin(user))
             throw new AuthError('User is not authenticated')
@@ -288,8 +306,10 @@ class ControllerBase {
     // GET RECENT
     getRecentDocuments = async (count, user, limit, startAtIndex, isPublic) => {
         // Get services
-        const db = await getDataService()
-        const logger = await getLoggingService()
+        const [db, logger] = await Promise.all([
+            getDataService(),
+            getLoggingService()
+        ])
         // Validate authentication
         if (!!this.options.isAdminOnly && !this.isUserAdmin(user))
             throw new AuthError('User is not authenticated')
@@ -305,8 +325,10 @@ class ControllerBase {
     // GET MY
     getMyDocuments = async (user, limit, startAtIndex) => {
         // Get services
-        const db = await getDataService()
-        const logger = await getLoggingService()
+        const [db, logger] = await Promise.all([
+            getDataService(),
+            getLoggingService()
+        ])
         // Validate authentication
         if (!user)
             throw new AuthError('User is not authenticated')
@@ -322,8 +344,10 @@ class ControllerBase {
     // GET USER
     getUserDocuments = async (user, ownerId, limit, startAtIndex) => {
         // Get services
-        const db = await getDataService()
-        const logger = await getLoggingService()
+        const [db, logger] = await Promise.all([
+            getDataService(),
+            getLoggingService()
+        ])
         // Validate authentication
         if (!this.isUserAdmin(user))
             throw new AuthError('User is not authenticated')
@@ -337,8 +361,10 @@ class ControllerBase {
     // UPDATE
     updateDocument = async (documentId, data, user) => {
         // Get services
-        const db = await getDataService()
-        const logger = await getLoggingService()
+        const [db, logger] = await Promise.all([
+            getDataService(),
+            getLoggingService()
+        ])
         // User must be creator or admin
         const oldData = await db.getDocumentById(this.collectionName, documentId)
         const isAdmin = !!user.admin
@@ -365,8 +391,10 @@ class ControllerBase {
     }
     updateDocuments = async (documents, user) => {
         // Get services
-        const db = await getDataService()
-        const logger = await getLoggingService()
+        const [db, logger] = await Promise.all([
+            getDataService(),
+            getLoggingService()
+        ])
         // Validate authentication
         if (!user)
             throw new AuthError('User is not authenticated')
@@ -387,8 +415,10 @@ class ControllerBase {
     // ARCHIVE
     archiveDocument = async (documentId, user) => {
         // Get services
-        const db = await getDataService()
-        const logger = await getLoggingService()
+        const [db, logger] = await Promise.all([
+            getDataService(),
+            getLoggingService()
+        ])
         // User must be creator or admin
         const data = await db.getDocumentById(this.collectionName, documentId)
         if (!data)
@@ -414,8 +444,10 @@ class ControllerBase {
     // DE-ARCHIVE
     dearchiveDocument = async (documentId, user) => {
         // Get services
-        const db = await getDataService()
-        const logger = await getLoggingService()
+        const [db, logger] = await Promise.all([
+            getDataService(),
+            getLoggingService()
+        ])
         // ADMIN ONLY
         if (!this.isUserAdmin(user) && !this.options.noMetaData) throw new AuthError('User is not authenticated')
         // De-archive document
@@ -433,8 +465,10 @@ class ControllerBase {
     // DELETE
     deleteDocument = async (documentId, user) => {
         // Get services
-        const db = await getDataService()
-        const logger = await getLoggingService()
+        const [db, logger] = await Promise.all([
+            getDataService(),
+            getLoggingService()
+        ])
         // Validate authentication
         const data = await db.getDocumentById(this.collectionName, documentId)
         if (!data)
