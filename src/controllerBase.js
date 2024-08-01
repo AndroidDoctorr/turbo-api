@@ -373,7 +373,7 @@ class ControllerBase {
         if (!user || !isAdminOrOwner)
             throw new AuthError('User is not authenticated')
         // Sanitize data
-        const filteredData = filterObjectByProps(data, this.propNames)
+        const filteredData = filterObjectByProps({ ...oldData, ...data }, this.propNames)
         const defaultedData = applyDefaults(filteredData, this.validationRules)
         const userId = !!user ? user.uid : 'anonymous'
         try {
