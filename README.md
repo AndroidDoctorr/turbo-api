@@ -14,6 +14,12 @@ If Turbo-API clicks for your Firebase backends, you are using it the way it is s
 
 **Current version:** see `package.json` (for example 1.1.x).
 
+### TypeScript
+
+The package ships **[index.d.ts](index.d.ts)** (see the `"types"` field in `package.json`). Consumption is unchanged: `require('turbo-api')` or `import ... from 'turbo-api'`. The declarations add typings for `buildApp`, `ControllerBase`, `validation`, `httpHelpers`, `serviceFactory`, and `stringHelpers`, plus shared types such as `TurboDataService` and `TurboApiUser`. `Express.Request` is augmented with optional `user` when auth middleware runs.
+
+turbo-api does not list `express`’s own types as a runtime dependency; if your editor or `tsc` cannot resolve `express` imports inside `index.d.ts`, install **`@types/express`** in your app (or rely on a stack that already provides it). In this repo, run **`npm run check-types`** to typecheck **`index.d.ts`** against a small smoke file.
+
 ## Documentation
 
 Full documentation lives in the **[docs](docs/README.md)** folder:

@@ -43,6 +43,10 @@ const {
 - **`httpHelpers`** — `handleRoute` / `handleErrors` for consistent JSON responses.
 - **`serviceFactory`** — `registerService`, `getDataService`, `getLoggingService`, `getAuthService`.
 
+### TypeScript
+
+The npm package points **`"types"`** at the repo root **[`index.d.ts`](../index.d.ts)**. The runtime stays plain JavaScript; no TypeScript build is required to use or publish turbo-api. Maintainers can run **`npm run check-types`** (see **`tsconfig.types.json`**, **`scripts/types-smoke.ts`**) to verify the declaration file. Application projects using TypeScript may need **`@types/express`** so imports inside `index.d.ts` resolve.
+
 ## Repository map
 
 | Path | Role |
