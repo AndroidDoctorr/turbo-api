@@ -51,4 +51,4 @@ File: `src/string.js`. Exported as **`stringHelpers`**.
 - **`objectToString(document, maxStringLength?, depth?)`** — multi-line stringify for logs; truncates long strings.
 - **`getDiffString(oldData, newData)`** — textual diff of keys removed or changed (used in update logging).
 
-`validation.js` imports `ObjectToString` from `./string` for one message; the main export uses `objectToString` / `getDiffString`.
+String helpers live in `string.js` and are exported as **`stringHelpers`** (`objectToString`, `getDiffString`). `validation.js` uses `objectToString` for unique-combination error messages.

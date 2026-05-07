@@ -3,6 +3,7 @@
   "version": "1.1.32",
   "description": "An API tool that extends expressJS to add validation and built-in controller CRUD, along with built-in firebase and AWS data, logging, and authentication services.",
   "main": "src/index.js",
+  "types": "index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -29,5 +30,8 @@
   "bugs": {
     "url": "https://github.com/AndroidDoctorr/turbo-api/issues"
   },
-  "homepage": "https://github.com/AndroidDoctorr/trubo-api#readme"
+  "homepage": "https://github.com/AndroidDoctorr/turbo-api#readme",
+  "devDependencies": {
+    "@types/express": "^4.17.21"
+  }
 }

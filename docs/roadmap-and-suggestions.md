@@ -38,14 +38,12 @@ Your current usage on Firebase projects is the **highest ROI** work.
 
 ## 3. Correctness and consistency in validation and controllers
 
-These items align validation with the “single rules object” story.
+The following were addressed in code:
 
-| Suggestion | Why |
-|------------|-----|
-| **`validateData`**: validate **all** rule keys in one pass (today the first property can short-circuit the loop). | Matches user expectation from EF-style “validate the DTO.” |
-| **`updateDocument` in `ControllerBase`**: merge `applyDefaults` / partial validation consistently (and fix any undefined references in the update path). | Updates should be as trustworthy as creates. |
-| **`string.js` export naming**: align `ObjectToString` vs `objectToString` usage in `validation.js` so `uniquePropCombination` errors cannot throw at runtime. | Small bug, high surprise factor. |
-| Consider **`validateDataPartial`** for PATCH semantics if you add partial updates beyond current merge behavior. | Real APIs often allow sparse payloads. |
+- **`validateData`** validates all field rules, then `uniquePropCombination` when defined.
+- **`ControllerBase.updateDocument`** uses a merged document (`oldData` + filtered body) with `applyDefaults` for validation, fixes the undefined `defaultedData` reference, and returns **`NotFoundError`** when the document is missing.
+- **`validation.js`** uses `objectToString` from `string.js` for unique-combination error messages.
+- **`validateDataPartial`** was added for PATCH-style payloads (validates only keys present on `data`; does not run `uniquePropCombination`).
 
 ---
 

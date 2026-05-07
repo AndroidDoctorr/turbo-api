@@ -318,6 +318,8 @@ class ControllerBase {
         const logger = await getLoggingService()
         // User must be creator or admin
         const oldData = await db.getDocumentById(this.collectionName, documentId)
+        if (!oldData)
+            throw new NotFoundError(`Cannot find ${this.collectionName} document to update: ${documentId}`)
         const isAdmin = !!user.admin
         const isOwner = user.uid === oldData.createdBy
         const isAdminOrOwner = isAdmin || isOwner
@@ -325,9 +327,10 @@ class ControllerBase {
             throw new AuthError('User is not authenticated')
         // Sanitize data
         const filteredData = filterObjectByProps(data, this.propNames)
+        const mergedForValidation = applyDefaults({ ...oldData, ...filteredData }, this.validationRules)
         const userId = !!user ? user.uid : 'anonymous'
         try {
-            await validateData(defaultedData, this.validationRules, db, this.collectionName)
+            await validateData(mergedForValidation, this.validationRules, db, this.collectionName)
             // Update document
             const newData = await db.updateDocument(this.collectionName, documentId, filteredData, userId, this.options.noMetaData)
             // Log and return if successful

@@ -23,7 +23,8 @@ Rules are plain objects with optional fields used by validators: `type`, `minLen
 
 - **`filterObjectByProps(data, propNames)`** — only keys listed in `propNames` are kept (incoming payload sanitation).
 - **`applyDefaults(data, rules)`** — copies `data` and fills `rule.default` when the key is missing.
-- **`validateData(data, rules, dbService, collectionName)`** — async; runs per-property validation and can hit the database for FK and uniqueness checks.
+- **`validateData(data, rules, dbService, collectionName)`** — async; validates **every** field rule in `rules`, then **`uniquePropCombination`** when present. Hits the database for FK and uniqueness checks where configured.
+- **`validateDataPartial(data, rules, dbService, collectionName)`** — async; validates **only** keys that exist on `data` and have a matching rule. Use for sparse PATCH bodies. Does **not** run `uniquePropCombination`; call `validateData` on a full merged document when you need that check.
 
 ### `uniquePropCombination`
 
@@ -65,10 +66,10 @@ Thrown from validation or mapped to HTTP responses via `http.handleErrors`:
 
 All extend `Error` with a `name` matching the class name.
 
-## Implementation note
+### `uniquePropCombination` order
 
-The current `validateData` implementation returns after processing the **first** enumerable rule key in the `rules` object. For full multi-field validation, rule object key order and this behavior may matter; consider validating critical fields first or consolidating rules until the loop is updated to continue for all properties.
+Field rules run first; the combination uniqueness check runs **last** so individual fields are validated before the composite check.
 
 ## Module exports (from code)
 
-`validateData`, `applyDefaults`, `filterObjectByProps`, all error classes, types, and rule helpers: `stringRule`, `fKeyRule`, `boolRule`, `enumRule`, `numberRule`, `colorRule`.
+`validateData`, `validateDataPartial`, `applyDefaults`, `filterObjectByProps`, all error classes, types, and rule helpers: `stringRule`, `fKeyRule`, `boolRule`, `enumRule`, `numberRule`, `colorRule`.

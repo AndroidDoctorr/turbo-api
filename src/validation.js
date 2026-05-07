@@ -1,4 +1,4 @@
-const { ObjectToString } = require("./string")
+const { objectToString } = require('./string')
 
 // Basic Types
 const stringType = typeof ''
@@ -116,12 +116,25 @@ const applyDefaults = (data, rules) => {
 // Validate a data object against its rules set, and potentially against the database
 const validateData = async (data, rules, dbService, collectionName) => {
     if (!data) throw new ValidationError(`No data`)
+    const combo = rules.uniquePropCombination
     for (const prop in rules) {
+        if (prop === 'uniquePropCombination') continue
         const rule = rules[prop]
-        if (prop === 'uniquePropCombination')
-            return await validateUniquePropCombo(data, rule, dbService, collectionName)
-        else
-            return await validateProp(prop, data, rule, dbService, collectionName)
+        await validateProp(prop, data, rule, dbService, collectionName)
+    }
+    if (combo)
+        await validateUniquePropCombo(data, combo, dbService, collectionName)
+}
+
+// Validate only properties present on data (PATCH / sparse payloads). Does not run uniquePropCombination;
+// use validateData on a merged full document when cross-field uniqueness must be checked.
+const validateDataPartial = async (data, rules, dbService, collectionName) => {
+    if (!data) throw new ValidationError(`No data`)
+    for (const prop of Object.keys(data)) {
+        if (prop === 'uniquePropCombination') continue
+        const rule = rules[prop]
+        if (!rule) continue
+        await validateProp(prop, data, rule, dbService, collectionName)
     }
 }
 // HELPER FUNCTIONS
@@ -284,11 +297,12 @@ const validateUniquePropCombo = async (data, props, dbService, collectionName) =
     // Check for existing documents with identical props
     const documents = await dbService.getDocumentsByProps(collectionName, propData, false)
     if (documents.length > 0)
-        throw new ForbiddenError(`Data is not unique in ${collectionName}: ${ObjectToString(propData)}`)
+        throw new ForbiddenError(`Data is not unique in ${collectionName}: ${objectToString(propData)}`)
 }
 
 module.exports = {
     validateData,
+    validateDataPartial,
     applyDefaults,
     filterObjectByProps,
     NoContentError,
