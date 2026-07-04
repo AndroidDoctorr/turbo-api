@@ -47,14 +47,35 @@ The following were addressed in code:
 
 ---
 
+## ScenAIrio-driven backlog (2026)
+
+Consolidated into **[Release plan 1.3.0](release-plan-1.3.md)** (§3 runtime fixes, §4 ScenAIrio upgrade checklist). Summary:
+
+| Priority | Item | In 1.3.0? |
+|----------|------|-----------|
+| **Critical** | Firestore query builder (port from npm 1.2.2) | Yes |
+| **Critical** | `validateUniquePropCombo` limit bug | Yes |
+| **Critical** | `ControllerBase.updateDocument` merge validation | Yes (on `big-update`) |
+| **Critical** | `banned` custom claim in auth | Yes (on `big-update`) |
+| **Critical** | Export `validateDataPartial` | Yes (on `big-update`) |
+| **High** | `getAuthService()` → `authService` config key | Yes |
+| **High** | `/recent` route count/limit | Yes |
+| **Medium** | TypeScript `index.d.ts` pagination arity | Yes |
+| **Medium** | Optional CORS / `express.json()` in `buildApp` | Defer 1.3.1 |
+| **Low** | Emulator tests, hooks, multi-backend | Roadmap §4–7 |
+
+ScenAIrio workaround until `1.3.0`: `functions/buildApp.js` in scenairio-web (remove after publish).
+
+---
+
 ## 4. Multi-backend strategy (AWS, Azure, SQL, NoSQL)
 
 You stalled here for good reasons: **one interface, many semantically different stores.** A phased approach keeps scope sane.
 
 | Phase | Focus | Outcome |
 |-------|--------|---------|
-| A | **Second document store** (for example DynamoDB or Cosmos DB NoSQL API) with the *existing* method names. | Proves adapter pattern without SQL joins. |
-| B | **SQL via a thin layer** (for example Knex or Prisma) implementing the same interface for simple CRUD; document **what is not supported** (ad-hoc filters, `queryDocumentsByProp` mapping). | Unlocks relational apps without pretending every Firestore query maps 1:1. |
+| A | **Second document store** — **DynamoDB (`aws` service) shipped in 1.4.0** | Adapter pattern proven; scan-based queries for MVP |
+| B | **SQL via PostgreSQL (`postgres` service) shipped in 1.5.0** | JSONB single-table MVP; `DATABASE_URL` setup |
 | C | Optional **query object** or **strategy interface** for list and search operations that are inherently provider-specific. | Stops forcing Firestore-isms onto SQL. |
 
 Cross-cutting ideas:
@@ -113,11 +134,15 @@ These would deepen the analogy without becoming a giant ORM.
 
 ## Suggested sequencing (if you pick the project back up)
 
-1. Tests + Firebase emulator + validation/update fixes (trust).
-2. `buildApp` ergonomics (JSON body, config path, auth service key).
-3. Firestore adapter audit (queries, limits, indexes documented).
-4. Type definitions + example repo (adoption).
-5. Second backend spike (one document DB or one SQL dialect) to stress the interface.
+**Immediate:** follow **[Release plan 1.3.0](release-plan-1.3.md)** (merge `big-update` + npm `1.2.2` Firestore fixes, publish, upgrade ScenAIrio).
+
+**After 1.3.0:**
+
+1. Tests + Firebase emulator + validation/update regression suite.
+2. `buildApp` ergonomics (JSON body, config path, optional CORS).
+3. Firestore adapter docs (composite indexes for common query shapes).
+4. Example repo (functions + turbo-api + emulator).
+5. Second backend spike (one document DB or one SQL dialect).
 6. Package split and optional advanced query API (scale).
 
 ---

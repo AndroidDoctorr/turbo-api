@@ -42,13 +42,30 @@ Several query methods **reassign** a `const docRef` or chain `.where` after assi
 
 ## Firestore logging
 
-File: `src/loggingServices/firestoreLoggerService.js`. Delegates to `firebase-functions/logger` (`log`, `info`, `warn`, `error`).
+File: `src/loggingServices/firestoreLoggerService.js`. Uses `firebase-functions/logger` when the host app provides it; otherwise falls back to **console**.
 
-## Winston / AWS (stub)
+## AWS DynamoDB
 
-`src/loggingServices/winstonLoggingService.js` is commented out: example Winston + CloudWatch setup.
+File: `src/dataServices/awsDataService.js`. Uses AWS SDK v3 Document Client.
 
-`src/dataServices/awsDataService.js` is a large commented-out DynamoDB sketch (`DynamoDB` AWS SDK v2 style).
+- Registers as service name **`aws`** when optional dependencies are installed (see [AWS DynamoDB](aws-dynamo.md)).
+- Table per collection; partition key **`id`** (String).
+- Metadata uses epoch ms for `created` / `modified` (Firestore uses `Timestamp`).
+- List/search methods use **scan + in-memory filter** — document limits before production scale.
+
+Auth: Cognito ID tokens via `src/authServices/awsAuthService.js`.  
+Logging: `src/loggingServices/consoleLoggerService.js`.
+
+## PostgreSQL
+
+File: `src/dataServices/postgresDataService.js`. Uses **`pg`** connection pool.
+
+- Registers as service name **`postgres`** when optional **`pg`** is installed.
+- **Connection:** `DATABASE_URL` env var first — see [PostgreSQL](postgresql.md).
+- **Schema:** auto-creates `turbo_api_documents` (collection + id + JSONB `document`).
+- Metadata uses epoch ms for `created` / `modified`.
+
+Auth: pass-through in `src/authServices/postgresAuthService.js` — set **`authService": "firestore"`** for Firebase Auth with Postgres data.
 
 ## Using a different backend
 
@@ -56,4 +73,4 @@ File: `src/loggingServices/firestoreLoggerService.js`. Delegates to `firebase-fu
 2. Implement a logger with `log`, `info`, `warn`, `error`.
 3. Provide an auth middleware factory compatible with Express: `(dataService) => (req, res, next) => void`.
 4. Call **`registerService('mybackend', MyData, MyLogger, myAuth)`** before building the app.
-5. Set `"dataService": "mybackend"` and `"loggingService": "mybackend"` in `turbo-config.json` (remember **`getAuthService`** currently keys off `loggingService`).
+5. Set `"dataService"`, `"loggingService"`, and `"authService"` in `turbo-config.json`.

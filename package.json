@@ -1,18 +1,32 @@
 {
   "name": "turbo-api",
-  "version": "1.1.32",
-  "description": "An API tool that extends expressJS to add validation and built-in controller CRUD, along with built-in firebase and AWS data, logging, and authentication services.",
+  "version": "1.5.0",
+  "description": "Convention-driven Express APIs with validation, CRUD controllers, and Firestore/Postgres/AWS backends.",
   "main": "src/index.js",
   "types": "index.d.ts",
+  "files": [
+    "src/",
+    "index.d.ts",
+    "docs/",
+    "AGENTS.md",
+    "README.md",
+    "CHANGELOG.md",
+    "turbo-config.example.json"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "check-types": "tsc -p tsconfig.types.json"
   },
   "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.19.2",
-    "firebase-admin": "^11.8.0",
-    "firebase-functions": "^4.3.1"
+    "cors": "^2.8.6",
+    "express": "^4.22.2",
+    "firebase-admin": "^14.1.0",
+    "pg": "^8.13.0"
+  },
+  "optionalDependencies": {
+    "@aws-sdk/client-dynamodb": "^3.750.0",
+    "@aws-sdk/lib-dynamodb": "^3.750.0",
+    "aws-jwt-verify": "^5.0.0"
   },
   "repository": {
     "type": "git",
@@ -24,7 +38,11 @@
     "api",
     "controllers",
     "validation",
-    "firestore"
+    "firestore",
+    "dynamodb",
+    "aws",
+    "postgres",
+    "postgresql"
   ],
   "author": "Andrew Torr",
   "license": "ISC",

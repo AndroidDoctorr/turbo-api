@@ -1,0 +1,9 @@
+{
+  "dataService": "firestore",
+  "loggingService": "firestore",
+  "authService": "firestore",
+  "controllers": {
+    "bookController": "/books",
+    "authorController": "/authors"
+  }
+}

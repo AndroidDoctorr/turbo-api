@@ -58,9 +58,16 @@ class ControllerBase {
                 await this.getMyDocuments(req.user)
             ))
 
-            this.router.get('/recent', (req, res) => handleRoute(req, res, async (req) =>
-                await this.getRecentDocuments(req.params.count, req.user, options.isPublicGet)
-            ))
+            this.router.get('/recent', (req, res) => handleRoute(req, res, async (req) => {
+                const limit = parseInt(req.query.limit, 10)
+                const startAtIndex = parseInt(req.query.startAtIndex, 10)
+                return await this.getRecentDocuments(
+                    isNaN(limit) ? undefined : limit,
+                    req.user,
+                    options.isPublicGet,
+                    isNaN(startAtIndex) ? undefined : startAtIndex
+                )
+            }))
         }
 
         this.router.get('/includeInactive', (req, res) => handleRoute(req, res, async (req) =>
@@ -263,7 +270,7 @@ class ControllerBase {
         return documents
     }
     // GET RECENT
-    getRecentDocuments = async (count, user, isPublic) => {
+    getRecentDocuments = async (limit, user, isPublic, startAtIndex) => {
         // Get services
         const db = await getDataService()
         const logger = await getLoggingService()
@@ -274,7 +281,7 @@ class ControllerBase {
             throw new AuthError('You must be logged in to see this')
         // Get document(s)
         const userId = !!user ? user.uid : 'anonymous'
-        const documents = await db.getRecentDocuments(this.collectionName, count)
+        const documents = await db.getRecentDocuments(this.collectionName, limit, startAtIndex)
         // Log and return if successful
         logger.info(`Recent ${this.collectionName} retrieved by user ${userId}`)
         return documents

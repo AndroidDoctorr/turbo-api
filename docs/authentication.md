@@ -25,6 +25,7 @@ with `authMiddleware` resolved from the service registry (see [Configuration](co
 - Malformed headers → **400** `{ error: 'Invalid Authorization Header' }`.
 - Invalid or expired token → **403** `{ error: 'Invalid Token' }`.
 - Firebase user with **`disabled: true`** → **403** `{ error: 'Account is suspended' }`.
+- Decoded token with custom claim **`banned: true`** → **403** `{ error: 'Account is banned' }` *(planned — not yet in all published versions; see [Roadmap](roadmap-and-suggestions.md))*.
 
 ### `req.user`
 

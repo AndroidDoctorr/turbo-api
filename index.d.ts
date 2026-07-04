@@ -1,9 +1,10 @@
 import type { Application, NextFunction, Request, Response } from 'express'
 
-/** Firebase-style decoded token; may include custom claims such as `admin`. */
+/** Firebase-style decoded token; may include custom claims such as `admin` or `banned`. */
 export interface TurboApiUser {
     uid: string
     admin?: boolean
+    banned?: boolean
     disabled?: boolean
     [claim: string]: unknown
 }
@@ -45,6 +46,7 @@ export type DocumentRecord = Record<string, unknown> & { id: string }
 
 /** Contract implemented by data services (e.g. Firestore). */
 export interface TurboDataService {
+    defaultLimit?: number
     createDocument(
         collectionName: string,
         data: Record<string, unknown>,
@@ -61,6 +63,7 @@ export interface TurboDataService {
         propName: string,
         propValue: unknown,
         limit?: number,
+        startAtIndex?: number,
         orderBy?: string,
         includeInactive?: boolean,
     ): Promise<DocumentRecord[]>
@@ -68,6 +71,7 @@ export interface TurboDataService {
         collectionName: string,
         props: Record<string, unknown>,
         limit?: number,
+        startAtIndex?: number,
         orderBy?: string,
         includeInactive?: boolean,
     ): Promise<DocumentRecord[]>
@@ -76,6 +80,7 @@ export interface TurboDataService {
         propName: string,
         queryText: string,
         limit?: number,
+        startAtIndex?: number,
         orderBy?: string,
         includeInactive?: boolean,
     ): Promise<DocumentRecord[]>
@@ -84,6 +89,7 @@ export interface TurboDataService {
         propName: string,
         values: unknown[],
         limit?: number,
+        startAtIndex?: number,
         orderBy?: string,
         includeInactive?: boolean,
     ): Promise<DocumentRecord[]>
@@ -91,23 +97,31 @@ export interface TurboDataService {
         collectionName: string,
         limit?: number,
         orderBy?: string,
+        startAtIndex?: number,
     ): Promise<DocumentRecord[]>
     getActiveDocuments(
         collectionName: string,
         limit?: number,
+        startAtIndex?: number,
         orderBy?: string,
     ): Promise<DocumentRecord[]>
-    getRecentDocuments(collectionName: string, limit?: number): Promise<DocumentRecord[]>
+    getRecentDocuments(
+        collectionName: string,
+        limit?: number,
+        startAtIndex?: number,
+    ): Promise<DocumentRecord[]>
     getMyDocuments(
         collectionName: string,
         userId: string,
         limit?: number,
+        startAtIndex?: number,
         orderBy?: string,
     ): Promise<DocumentRecord[]>
     getUserDocuments(
         collectionName: string,
         userId: string,
         limit?: number,
+        startAtIndex?: number,
         orderBy?: string,
     ): Promise<DocumentRecord[]>
     updateDocument(
@@ -199,9 +213,10 @@ export class ControllerBase {
         isPublic?: boolean,
     ): Promise<DocumentRecord[]>
     getRecentDocuments(
-        count: number | undefined,
+        limit: number | undefined,
         user: TurboApiUser | undefined,
         isPublic?: boolean,
+        startAtIndex?: number,
     ): Promise<DocumentRecord[]>
     getMyDocuments(user: TurboApiUser | undefined): Promise<DocumentRecord[]>
     getUserDocuments(user: TurboApiUser | undefined, ownerId: string): Promise<DocumentRecord[]>

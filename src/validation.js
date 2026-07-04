@@ -295,7 +295,7 @@ const validateUniquePropCombo = async (data, props, dbService, collectionName) =
     for (const prop of props)
         propData[prop] = data[prop]
     // Check for existing documents with identical props
-    const documents = await dbService.getDocumentsByProps(collectionName, propData, false)
+    const documents = await dbService.getDocumentsByProps(collectionName, propData)
     if (documents.length > 0)
         throw new ForbiddenError(`Data is not unique in ${collectionName}: ${objectToString(propData)}`)
 }

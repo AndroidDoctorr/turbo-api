@@ -1,4 +1,4 @@
-const admin = require('firebase-admin')
+const { getAuth } = require('firebase-admin/auth')
 
 const createAuthenticationMiddleware = (dataService) => {
     return async (req, res, next) => {
@@ -19,10 +19,12 @@ const createAuthenticationMiddleware = (dataService) => {
             return handleInvalidHeader()
 
         try {
-            const decodedToken = await admin.auth().verifyIdToken(idToken)
+            const decodedToken = await getAuth().verifyIdToken(idToken)
             req.user = decodedToken
             if (req.user.disabled === true)
                 return res.status(403).json({ error: 'Account is suspended' })
+            if (req.user.banned === true)
+                return res.status(403).json({ error: 'Account is banned' })
             next()
         } catch (error) {
             return res.status(403).json({ error: 'Invalid Token' })

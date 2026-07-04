@@ -45,7 +45,7 @@ Everything in `basicCRUD`, plus:
 | Method | Path | Notes |
 |--------|------|--------|
 | GET | `/my` | Current user’s documents (`getMyDocuments`) — skipped if `options.noMetaData` |
-| GET | `/recent` | Recent documents (`getRecentDocuments`) — skipped if `options.noMetaData` |
+| GET | `/recent` | Recent documents (`getRecentDocuments`) — query `?limit=` and optional `?startAtIndex=`; skipped if `options.noMetaData` |
 | GET | `/includeInactive` | All documents including inactive — **admin only** |
 | GET | `/:id` | Same as basic |
 | GET | `/:id/full` | Same as `/:id` but expands foreign-key fields inline |

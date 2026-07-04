@@ -1,131 +1,109 @@
 # Turbo-API
 
-## Purpose
+**Convention-driven HTTP APIs for Node.js** — describe a resource once (validation rules + collection name), get CRUD routes, auth-aware handlers, and swappable backends (Firestore, PostgreSQL, AWS DynamoDB).
 
-Turbo-API is a **productivity layer for Node.js HTTP APIs**: you describe a resource (what it is stored as, which fields are allowed, and how they are validated), and you get **consistent CRUD routes**, **Firebase Auth-aware access**, and **pluggable persistence** with less boilerplate than wiring Express and the Admin SDK by hand.
+Think **Entity Framework–style productivity** for JavaScript: shared metadata, soft-delete, owner/admin rules — without a full ORM.
 
-The mental model is intentionally similar to what **Entity Framework** gives .NET developers for app data—not a line-for-line ORM with migrations, change tracking, and LINQ, but the same *goals*: **conventions** (metadata, soft-delete via `isActive`, owner and admin rules), a **single place** for validation rules, and a **repository-shaped data layer** you can swap when the backend changes.
+**Version:** `1.5.x` — see [CHANGELOG](CHANGELOG.md)
 
-**Today:** the implementation is **Firebase-first** (Firebase Functions + Firestore + ID token verification). That is where the library is battle-tested and where it saves the most time.
+---
 
-**Originally envisioned:** the same controller and validation surface talking to **other clouds** (AWS, Azure) and **SQL or NoSQL** through extra adapters. That remains a good direction; progress there has been slow because each vendor differs, and Firebase alone already solved the maintainer’s immediate needs for several apps.
+## New here?
 
-If Turbo-API clicks for your Firebase backends, you are using it the way it is strongest right now.
+| Audience | Start here |
+|----------|------------|
+| **Developers** | [Implementing in your app](docs/implementing-in-your-app.md) → [Quick reference](docs/quick-reference.md) |
+| **LLM / coding agents** | **[AGENTS.md](AGENTS.md)** |
+| **Upgrading from 1.2.x** | [Upgrading guide](docs/upgrading.md) |
+| **All docs** | [docs/README.md](docs/README.md) |
 
-**Current version:** see `package.json` (for example 1.1.x).
+**Example harness:** the **turbo-api-test** project (Express + Postgres + integration tests) — use as a template when available alongside this repo.
 
-### TypeScript
+---
 
-The package ships **[index.d.ts](index.d.ts)** (see the `"types"` field in `package.json`). Consumption is unchanged: `require('turbo-api')` or `import ... from 'turbo-api'`. The declarations add typings for `buildApp`, `ControllerBase`, `validation`, `httpHelpers`, `serviceFactory`, and `stringHelpers`, plus shared types such as `TurboDataService` and `TurboApiUser`. `Express.Request` is augmented with optional `user` when auth middleware runs.
-
-turbo-api does not list `express`’s own types as a runtime dependency; if your editor or `tsc` cannot resolve `express` imports inside `index.d.ts`, install **`@types/express`** in your app (or rely on a stack that already provides it). In this repo, run **`npm run check-types`** to typecheck **`index.d.ts`** against a small smoke file.
-
-## Documentation
-
-Full documentation lives in the **[docs](docs/README.md)** folder:
-
-| Doc | Description |
-|-----|-------------|
-| [docs/README.md](docs/README.md) | Documentation index and package map |
-| [Getting started](docs/getting-started.md) | Install, layout, `buildApp`, Firebase wiring |
-| [Configuration](docs/configuration.md) | `turbo-config.json`, service names, cwd |
-| [Controllers & routes](docs/controllers.md) | `ControllerBase`, CRUD routes, permissions |
-| [Validation](docs/validation.md) | Rules, errors, `validateData` |
-| [Authentication](docs/authentication.md) | Firebase Bearer tokens, `req.user` |
-| [Data & logging](docs/data-layer.md) | Firestore service, registry, stubs |
-| [HTTP & errors](docs/http-errors.md) | `handleRoute`, status codes |
-| [Extending](docs/extending.md) | `registerService`, AWS sketches |
-| [Roadmap & suggestions](docs/roadmap-and-suggestions.md) | Future direction, improvements, backlog ideas |
-
-## Features (high level)
-
-- **Rapid API development** — minimal wiring; focus on controllers and rules.
-- **Customizable** — add routes, swap services, extend validation.
-- **Validation** — typed rules, FK checks, uniqueness, conditional requirements.
-- **Service agnostic** — default Firestore; register other backends via `serviceFactory`.
-- **Auth** — Firebase ID token middleware; optional public routes via controller options.
-
-## Quick start
+## 5-minute setup
 
 ```bash
-npm install turbo-api
+npm install turbo-api express dotenv
 ```
 
-Create `turbo-config.json` (in the directory that will be `process.cwd()` at runtime), a `controllers/` folder, and export `buildApp` from your host (see [Getting started](docs/getting-started.md)).
-
-### Minimal config example
+**1.** `turbo-config.json` in your runtime **cwd** (copy [turbo-config.example.json](turbo-config.example.json)):
 
 ```json
 {
   "dataService": "firestore",
   "loggingService": "firestore",
-  "controllers": {
-    "bookController": "/books",
-    "authorController": "/authors"
-  }
+  "authService": "firestore",
+  "controllers": { "bookController": "/books" }
 }
 ```
 
-### Minimal functions entry (pattern)
+**2.** `controllers/bookController.js` — export `{ controller: BookController }` extending `ControllerBase`.
+
+**3.** Host app — **must** include `express.json()`:
 
 ```javascript
-const admin = require('firebase-admin')
+require('dotenv').config()
+const express = require('express')
 const { buildApp } = require('turbo-api')
 
-admin.initializeApp()
-
-exports.api = require('firebase-functions').https.onRequest(async (req, res) => {
-  const app = await buildApp()
-  return app(req, res)
-})
+const turbo = await buildApp()
+const app = express()
+app.use(express.json())
+app.use(turbo)
+app.listen(3000)
 ```
 
-For JSON POST/PUT bodies you typically need `express.json()` in front of your routes; see [Getting started](docs/getting-started.md).
+**Backend env:**
 
-## Example controller (sketch)
+- **Firestore:** `GOOGLE_APPLICATION_CREDENTIALS` or Firebase default credentials
+- **Postgres:** `DATABASE_URL=postgresql://...`
+- **AWS:** standard AWS creds + Cognito env vars — see [docs/aws-dynamo.md](docs/aws-dynamo.md)
 
-```javascript
-const { ControllerBase, validation, httpHelpers, serviceFactory } = require('turbo-api')
-const { handleRoute } = httpHelpers
-const { stringRule, numberRule, validateData } = validation
-const { getDataService } = serviceFactory
+---
 
-const COLLECTION = 'Books'
-const PROPS = ['title', 'year']
-const RULES = {
-  title: stringRule(1, 200, true),
-  year: numberRule(0, new Date().getFullYear(), true),
-}
+## Features
 
-class BookController extends ControllerBase {
-  constructor() {
-    super(COLLECTION, RULES, PROPS)
-  }
-  configureRoutes() {
-    this.basicCRUD({ isPublicGet: true, isPublicPost: false })
-    // custom route example:
-    this.router.post('/batch', (req, res) =>
-      handleRoute(req, res, async (req) => {
-        const db = await getDataService()
-        await validateData(req.body, RULES, db, COLLECTION)
-        const created = await db.createDocument(COLLECTION, req.body, req.user.uid)
-        return created
-      })
-    )
-  }
-}
+- **Controllers + validation** — `basicCRUD` / `fullCRUD`, custom routes via `handleRoute`
+- **Backends** — `firestore` (default), `postgres`, `aws` (DynamoDB)
+- **Auth** — Firebase ID tokens (default); Cognito for AWS; mix Postgres data + Firebase auth
+- **TypeScript** — [index.d.ts](index.d.ts), no compile step required to consume
 
-module.exports = { controller: BookController }
-```
+---
+
+## Documentation
+
+| Doc | Description |
+|-----|-------------|
+| [Implementing in your app](docs/implementing-in-your-app.md) | Full setup walkthrough |
+| [AGENTS.md](AGENTS.md) | Rules for LLM agents |
+| [Quick reference](docs/quick-reference.md) | One-page cheat sheet |
+| [Configuration](docs/configuration.md) | `turbo-config.json`, env vars |
+| [Controllers](docs/controllers.md) | CRUD routes & permissions |
+| [Validation](docs/validation.md) | Rules & errors |
+| [Authentication](docs/authentication.md) | Bearer tokens, claims |
+| [PostgreSQL](docs/postgresql.md) | `DATABASE_URL` setup |
+| [AWS DynamoDB](docs/aws-dynamo.md) | DynamoDB + Cognito |
+| [Upgrading](docs/upgrading.md) | 1.2.x → 1.5.x |
+| [Publishing](docs/PUBLISH.md) | Maintainer release checklist |
+
+---
+
+## Before you publish (maintainers)
+
+See **[docs/PUBLISH.md](docs/PUBLISH.md)**. Short version:
+
+1. `npm run check-types` in turbo-api  
+2. Integration tests in **turbo-api-test** (`npm run test:integration`)  
+3. Update [CHANGELOG](CHANGELOG.md), tag `v1.5.0`, `npm publish`  
+4. In consumer apps: [Upgrading](docs/upgrading.md) + smoke CRUD/auth  
+
+---
 
 ## Repository
 
-- **Issues & PRs:** [github.com/AndroidDoctorr/turbo-api](https://github.com/AndroidDoctorr/turbo-api)
-
-## Future work
-
-See **[Roadmap & suggestions](docs/roadmap-and-suggestions.md)** for a fuller list (Firebase hardening, multi-backend strategy, config and DX, validation, types, and codebase fixes). **Contributions welcome.**
+[github.com/AndroidDoctorr/turbo-api](https://github.com/AndroidDoctorr/turbo-api) — contributions welcome.
 
 ## License
 
-ISC — see `package.json`.
+ISC

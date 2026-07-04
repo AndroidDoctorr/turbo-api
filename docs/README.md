@@ -1,30 +1,39 @@
 # Turbo-API documentation
 
-Turbo-API is an Express-based library for Firebase Functions (and similar hosts) that wires authentication, pluggable data/logging services, validation, and controller-driven CRUD with sensible metadata and soft-delete patterns.
+Turbo-API is an Express library for building validated, authenticated HTTP APIs with pluggable persistence (Firestore, PostgreSQL, AWS DynamoDB).
 
-## Purpose (why this exists)
+## Start here
 
-The library targets the same **productivity niche as Entity Framework** in .NET: **describe your resource and rules once**, lean on **shared conventions** (metadata, ownership, soft-delete), and spend less time on repetitive API glue. It is **not** a full EF equivalent—there is no universal query language or migrations story in core—but it **is** “EF-flavored” in the sense of **convention-over-configuration for HTTP + persistence**.
+| I want to… | Read |
+|------------|------|
+| Add turbo-api to my project | **[Implementing in your app](implementing-in-your-app.md)** |
+| Copy-paste config & patterns | **[Quick reference](quick-reference.md)** |
+| Upgrade from npm 1.2.x | **[Upgrading](upgrading.md)** |
+| Wire an LLM agent | **[AGENTS.md](../AGENTS.md)** (repo root) |
 
-**Firebase (Firestore + Auth) is the supported sweet spot today.** Broader backends (AWS, Azure, SQL, other document stores) fit the **adapter + `registerService`** idea sketched in the repo; that work is a deliberate next phase, not a prerequisite for using Turbo-API on Firebase projects.
+## Guides
 
-For a candid backlog (fixes, DX, multi-backend strategy, types), see **[Roadmap & suggestions](roadmap-and-suggestions.md)**.
+- [Getting started](getting-started.md) — install, cwd layout, Express vs Functions
+- [Configuration](configuration.md) — `turbo-config.json`, env vars, backends
+- [Controllers & routes](controllers.md) — `ControllerBase`, CRUD, permissions
+- [Validation](validation.md) — rules, errors, `validateDataPartial`
+- [Authentication](authentication.md) — Firebase, Cognito, anonymous access
+- [Data & logging services](data-layer.md) — service registry, Firestore, adapters
+- [HTTP helpers & errors](http-errors.md) — `handleRoute`, status codes
 
-## Contents
+## Backends
 
-- [Getting started](getting-started.md) — install, project layout, minimal Firebase wiring
-- [Configuration](configuration.md) — `turbo-config.json`, `process.cwd()`, and service selection
-- [Controllers & routes](controllers.md) — `ControllerBase`, `basicCRUD` / `fullCRUD`, permissions, document metadata
-- [Validation](validation.md) — rule builders, conditional rules, errors, and exports from `validation`
-- [Authentication](authentication.md) — Firebase ID tokens, `req.user`, and anonymous access
-- [Data & logging services](data-layer.md) — Firestore data model, queries, logging, `registerService`
-- [HTTP helpers & errors](http-errors.md) — `handleRoute`, status codes, and custom routes
-- [Extending Turbo-API](extending.md) — adding backends, AWS stubs in the repo
-- [Roadmap & suggestions](roadmap-and-suggestions.md) — suggested updates, sequencing, multi-backend notes
+- [PostgreSQL](postgresql.md) — **`DATABASE_URL`**, auto schema
+- [AWS DynamoDB](aws-dynamo.md) — tables, Cognito
+- [Extending](extending.md) — custom `registerService`
 
-## Package entry points
+## Project meta
 
-From application code:
+- [Roadmap & suggestions](roadmap-and-suggestions.md)
+- [Publishing](PUBLISH.md) — maintainer release checklist
+- [Release plan 1.3.0](release-plan-1.3.md) — historical ScenAIrio release notes
+
+## Package exports
 
 ```javascript
 const {
@@ -37,30 +46,15 @@ const {
 } = require('turbo-api')
 ```
 
-- **`buildApp()`** — async factory that loads config, registers default services, attaches auth middleware, and mounts controllers.
-- **`ControllerBase`** — base class for resource controllers (Express `Router` per controller).
-- **`validation`** — rules, validators, and typed errors used across controllers and services.
-- **`httpHelpers`** — `handleRoute` / `handleErrors` for consistent JSON responses.
-- **`serviceFactory`** — `registerService`, `getDataService`, `getLoggingService`, `getAuthService`.
+TypeScript: [`index.d.ts`](../index.d.ts) — run `npm run check-types` in this repo to verify.
 
-### TypeScript
+## What turbo-api is / isn't
 
-The npm package points **`"types"`** at the repo root **[`index.d.ts`](../index.d.ts)**. The runtime stays plain JavaScript; no TypeScript build is required to use or publish turbo-api. Maintainers can run **`npm run check-types`** (see **`tsconfig.types.json`**, **`scripts/types-smoke.ts`**) to verify the declaration file. Application projects using TypeScript may need **`@types/express`** so imports inside `index.d.ts` resolve.
+| Is | Isn't |
+|----|-------|
+| Controller + validation + CRUD conventions | Full ORM with migrations |
+| Pluggable data service (`TurboDataService`) | Universal query language |
+| Express sub-app via `buildApp()` | Standalone server binary |
+| Firebase-first, Postgres/AWS optional | Azure adapter (yet) |
 
-## Repository map
-
-| Path | Role |
-|------|------|
-| `src/index.js` | `buildApp`, public exports |
-| `src/controllerBase.js` | CRUD, archive/dearchive, query helpers |
-| `src/validation.js` | Rules and validation pipeline |
-| `src/http.js` | Route wrapper and error-to-status mapping |
-| `src/serviceFactory.js` | Service registry keyed by config |
-| `src/file.js` | Loads `turbo-config.json` |
-| `src/dataServices/firestoreDataService.js` | Firestore implementation |
-| `src/authServices/firebaseAuthService.js` | Bearer token → `req.user` |
-| `src/loggingServices/firestoreLoggerService.js` | Firebase Functions logger adapter |
-
-## License
-
-Turbo-API uses the [ISC License](../README.md#license) (see root README).
+Example project: **turbo-api-test** (maintainer harness — Express, Postgres, tests).

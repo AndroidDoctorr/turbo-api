@@ -2,61 +2,99 @@
 
 ## Prerequisites
 
-- Node.js and npm
-- A Firebase project (for the default Firestore + Auth stack)
-- Firebase CLI (`npm install -g firebase-tools`) if you scaffold with `firebase init`
+- **Node.js 18+**
+- A **backend** chosen in config:
+  - **Firestore** — Firebase project + Admin credentials (default)
+  - **PostgreSQL** — running Postgres + `DATABASE_URL`
+  - **AWS** — DynamoDB tables + optional Cognito (see [AWS DynamoDB](aws-dynamo.md))
+
+Firebase Functions are **optional** — Express works fine for local dev and many deployments.
 
 ## Install
 
 ```bash
-npm install turbo-api
+npm install turbo-api express dotenv
 ```
 
-Declared dependencies in this package include `express`, `cors`, `firebase-admin`, and `firebase-functions`. Your hosting app should initialize Firebase Admin before requests hit routes that use Firestore or Auth (typical for Firebase Functions).
+Host apps using Firestore should also install **`firebase-admin@^14`**. For Firebase Functions Cloud Logging, install **`firebase-functions`** in the **host** project (not required by turbo-api itself).
 
 ## Recommended project layout
 
-The library loads controllers from a **`controllers`** directory relative to **`process.cwd()`** and reads **`turbo-config.json`** from the same cwd (see [Configuration](configuration.md)).
+turbo-api loads from **`process.cwd()`**:
 
-A common Firebase Functions layout:
+- `turbo-config.json` (or `TURBO_CONFIG_PATH` env)
+- `controllers/<name>.js` for each key in config
 
 ```text
-your-project/
-  turbo-config.json
-  functions/
-    package.json
-    index.js
-    controllers/
-      bookController.js
+my-app/
+  turbo-config.json          ← copy from turbo-config.example.json
+  controllers/
+    bookController.js
+  src/
+    server.js
+  package.json
 ```
 
-Because `getConfig()` and controller loading use `process.cwd()`, the config file and `controllers` folder must live in whatever directory is the current working directory when your functions run. If your cwd is `functions/`, place `turbo-config.json` and `controllers/` under `functions/` (or adjust your deploy/runtime cwd to match where you put those files).
+**Firebase Functions:** if runtime cwd is `functions/`, put config and controllers **inside `functions/`**.
 
-## Express JSON bodies
+See **[Implementing in your app](implementing-in-your-app.md)** for full steps.
 
-`buildApp()` does not currently register `express.json()`. If you use JSON request bodies with the stock `buildApp()` instance, ensure JSON parsing is applied (for example by merging middleware in your host entrypoint before or after calling `buildApp()`, depending on how you compose the app). Without a JSON body parser, `req.body` may be undefined on POST/PUT.
+## Express host (recommended for learning)
 
-## Bootstrap the HTTP app
+```javascript
+require('dotenv').config()
+const express = require('express')
+const admin = require('firebase-admin')
+const { buildApp } = require('turbo-api')
 
-`buildApp` is **async** — await it when starting the server.
+admin.initializeApp() // Firestore/Auth; uses GOOGLE_APPLICATION_CREDENTIALS
+
+let app
+async function getApp() {
+  if (!app) {
+    const turbo = await buildApp()
+    app = express()
+    app.use(express.json()) // required — turbo-api does not add this
+    app.use(turbo)
+  }
+  return app
+}
+
+getApp().then((a) => a.listen(3000))
+```
+
+## Firebase Functions host
 
 ```javascript
 const functions = require('firebase-functions')
 const admin = require('firebase-admin')
-const { buildApp } = require('turbo-api')
+const { getApp } = require('./server') // pattern above
 
 admin.initializeApp()
 
+let app
 exports.api = functions.https.onRequest(async (req, res) => {
-  const app = await buildApp()
+  if (!app) app = await getApp()
   return app(req, res)
 })
 ```
 
-If you cache the Express app between invocations (to reduce cold-start work), keep the same pattern but store `await buildApp()` once in module scope.
+Cache `await getApp()` in module scope to reduce cold-start work.
+
+## Choose a backend
+
+| Config `dataService` | Setup |
+|----------------------|--------|
+| `firestore` | Firebase Admin credentials |
+| `postgres` | Set **`DATABASE_URL`** — [PostgreSQL guide](postgresql.md) |
+| `aws` | AWS SDK credentials + DynamoDB tables — [AWS guide](aws-dynamo.md) |
+
+Mix backends: e.g. `"dataService": "postgres"`, `"authService": "firestore"`.
 
 ## Next steps
 
-- Define [configuration](configuration.md)
-- Implement a [controller](controllers.md) extending `ControllerBase`
-- Tune [validation](validation.md) and [auth](authentication.md) behavior
+- [Configuration](configuration.md)
+- [Controllers](controllers.md)
+- [Validation](validation.md)
+- [Quick reference](quick-reference.md)
+- [AGENTS.md](../AGENTS.md) for automated implementation

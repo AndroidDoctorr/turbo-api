@@ -8,22 +8,31 @@ Use `serviceFactory.registerService` to bind a name to:
 2. **Logging service class** — instantiated with `new LoggingService()`
 3. **Auth middleware factory** — `(dataService) => expressMiddleware`
 
-Names must match `dataService` and `loggingService` strings in `turbo-config.json`. **`getAuthService`** currently reads **`loggingService`** only; there is no separate `authService` key in config.
+Names must match `dataService`, `loggingService`, and optionally **`authService`** in `turbo-config.json`. **`getAuthService`** resolves: `authService` → `dataService` → `loggingService` → `firestore`.
 
-## AWS placeholders
+## Built-in backends
 
-The repository includes commented-out implementations:
+| Service name | Data | Auth | Logging | Registered by |
+|--------------|------|------|---------|---------------|
+| `firestore` | Firestore | Firebase ID token | Firebase Functions logger (or console) | Always |
+| `aws` | DynamoDB | Cognito ID token | Console | When optional AWS deps install |
+| `postgres` | PostgreSQL | Pass-through *(use `authService: firestore` for Firebase)* | Console | When optional `pg` installs |
 
-- `src/dataServices/awsDataService.js` — DynamoDB-oriented CRUD sketch.
-- `src/authServices/awsAuthService.js` — Lambda-style auth sketch.
-- `src/loggingServices/winstonLoggingService.js` — Winston + CloudWatch sketch.
+See **[PostgreSQL](postgresql.md)** for connection string setup (`DATABASE_URL` recommended).
+See **[AWS DynamoDB](aws-dynamo.md)** for table schema, env vars, and query limits.
 
-These are not loaded by `buildApp` today; they serve as examples for a future AWS-backed registration:
+## Manual registration (custom backend)
 
 ```javascript
-const { registerService } = require('turbo-api').serviceFactory
-// registerService('aws', AwsDataService, WinstonLogger, awsAuthFactory)
+const { serviceFactory } = require('turbo-api').serviceFactory
+const MyDataService = require('./myDataService')
+const MyLogger = require('./myLogger')
+const myAuthFactory = require('./myAuth')
+
+serviceFactory.registerService('mybackend', MyDataService, MyLogger, myAuthFactory)
 ```
+
+Set `"dataService": "mybackend"` and matching `loggingService` / `authService` in config.
 
 ## CORS
 
