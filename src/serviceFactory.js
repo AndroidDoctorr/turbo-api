@@ -31,8 +31,7 @@ const getLoggingService = async () => {
 
 const getAuthService = async () => {
     const config = await getConfig()
-    // Default to Firestore if not specified
-    const serviceName = config.loggingService || 'firestore'
+    const serviceName = config.authService || config.dataService || config.loggingService || 'firestore'
     if (serviceRegistry[serviceName])
         return serviceRegistry[serviceName].authMiddleware
 }
